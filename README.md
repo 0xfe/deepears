@@ -3,16 +3,22 @@
 Sets up python virtualenv, and AWS env variables.
 
     $ source env.sh
-    $ ssh mohit@$TF1HOST (or $TFDEVHOST)
+    $ mosh mohit@$TF1HOST (or $TFDEVHOST)
+    tf$ . tfenv.sh
 
 If instances aren't running:
 
     $ aws ec2 start-instances --instance-ids $TF1
+    $ . env.sh
 
 To stop:
 
     $ ssh ...; $ sudo shutdown now
-    $ $ aws ec2 stop-instances --instance-ids $TF1
+    $ aws ec2 stop-instances --instance-ids $TF1
+
+Sync:
+
+    $ ./bootstrap/sync.sh
 
 ## MIDI Sample Generation
 
