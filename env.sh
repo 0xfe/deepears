@@ -11,11 +11,11 @@ CPUHOST=tfdev
 GPUHOST=tftrain1
 
 # Hosts
-TFDEV=`aws ec2 describe-instances --filters Name=tag:id,Values=$CPUHOST | jq -r '.Reservations[0].Instances[0].InstanceId'`
-TFDEVHOST=`aws ec2 describe-instances --filters Name=tag:id,Values=$CPUHOST | jq -r '.Reservations[0].Instances[0].PublicDnsName'`
+export TFDEV=`aws ec2 describe-instances --filters Name=tag:id,Values=$CPUHOST | jq -r '.Reservations[0].Instances[0].InstanceId'`
+export TFDEVHOST=`aws ec2 describe-instances --filters Name=tag:id,Values=$CPUHOST | jq -r '.Reservations[0].Instances[0].PublicDnsName'`
 
-TF1=`aws ec2 describe-instances --filters Name=tag:id,Values=$GPUHOST | jq -r '.Reservations[0].Instances[0].InstanceId'`
-TF1HOST=`aws ec2 describe-instances --filters Name=tag:id,Values=$GPUHOST | jq -r '.Reservations[0].Instances[0].PublicDnsName'`
+export TF1=`aws ec2 describe-instances --filters Name=tag:id,Values=$GPUHOST | jq -r '.Reservations[0].Instances[0].InstanceId'`
+export TF1HOST=`aws ec2 describe-instances --filters Name=tag:id,Values=$GPUHOST | jq -r '.Reservations[0].Instances[0].PublicDnsName'`
 
 echo "CPU ($CPUHOST):"
 echo "  TFDEV=$TFDEV"
