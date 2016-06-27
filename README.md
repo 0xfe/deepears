@@ -1,42 +1,42 @@
-### Quick Start (Post-installation)
+## Quick Start (Post-installation)
 
 Sets up python virtualenv, and AWS env variables.
 
     $ source env.sh
     $ ssh mohit@$TF1HOST (or $TFDEVHOST)
 
-### MIDI Sample Generation
+## MIDI Sample Generation
 
-## Installation
+### Installation
 
     $ gem install midilib
     $ brew install fluidsynth sox jq
 
-## Get soundfont
+### Get soundfont
 
     Browse: https://musescore.org/en/handbook/soundfont#list
 
-## Generate MIDI
+### Generate MIDI
 
   $ ./gen_midi_samples.rb
   $ play data/wav/*`
 
-## To play
+### To play
 
     $ fluidsynth -a coreaudio FluidR3_GM.sf2 "/Applications/Band-in-a-Box/Styles/Ear Training/Music Replay/MelodyReplay/MR02041.MID"
 
-## To convert to WAV
+### To convert to WAV
 
     $  fluid synth -l -i -a file ~/w/audio/octave/FluidR3_GM.sf2 from_scratch.mid -F raw_audio
     $ sox -t raw -r 44100 -e signed -b 16 -c 2 raw_audio audio.wav
 
-## Mix down to 1 channel and normalize
+### Mix down to 1 channel and normalize
 
     $ sox -t raw -r 44100 -e signed -b 16 -c 2 test.raw ~/Downloads/test1.wav norm remix 2
 
 (If you get clipping, try -b 32. If that doesn’t work add —norm)
 
-## To create spectrogram
+### To create spectrogram
 
     $ sox ~/Downloads/test1.wav -n remix 2 spectrogram -x 400 -y 400 -m -r
 
@@ -54,9 +54,9 @@ To add noise:
 
     $ sox ~/Downloads/test1.wav -p synth whitenoise vol 0.1 | sox -m ~/Downloads/test1.wav - ~/Downloads/noisy.wav
 
-### TensorFlow Audio Training
+## TensorFlow Audio Training
 
-## Install NumPy, SciPy, Pandas, TensorFlow on Mac
+### Install NumPy, SciPy, Pandas, TensorFlow on Mac
 
     $ sudo easy_install pip
     $ sudo pip install --upgrade virtualenv
@@ -65,7 +65,7 @@ To add noise:
 
 Install numerical modules:
 
-    (tf)$ pip install scipy pandas matplotlib sklearn numpy seaborn tqdm
+    (tf)$ pip install scipy pandas matplotlib sklearn numpy seaborn tqdm awscli
 
 Install Tensorflow:
 
@@ -74,11 +74,12 @@ Install Tensorflow:
     
 Note: You may need to add flag to 'pip install' of TF: --ignore-installed six (details)
 
-## AWS
+### AWS
 
 Install AWS CLI.
 
     $ pip install awscli
+    $ brew install jq
 
 Decrypt keys in `awskey.csv.gpg` and SSH private key in `tftrain.pem`. Then configure AWS.
 
@@ -87,7 +88,7 @@ Decrypt keys in `awskey.csv.gpg` and SSH private key in `tftrain.pem`. Then conf
     $ chmod 400 tftrain.pem awskey.csv
     $ aws configure (region: us-east-1) 
 
-## AWS Tools
+### AWS Tools
 
 Create AWS GPU instance using AMI: `ami-fce3c696` (Ubuntu Trusty 14.04)
 
@@ -145,7 +146,7 @@ Add to `.bashrc` (probably already there):
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64"
     export CUDA_HOME=/usr/local/cuda
 
-## Training
+### Training
 
 First convert WAV files to TFRecord format:
 
@@ -157,7 +158,7 @@ Start training:
 
 ## Log (Singles)
 
-# June 22 2016
+### June 22 2016
 Input layer: 25800
 Output layer: 12 (softmax)
 No hidden layers (simple linear model with softmax output   )
