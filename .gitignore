@@ -1,0 +1,19 @@
+ruby_sess.*
+.*.swp
+.*.swo
+.swp
+.hi
+.[oa]
+*.pyc
+.svn
+.class
+# except foo.o which is hand maintained
+!foo.o
+.DS_Store
+*.brackup
+*.brackup.*
+octave-core
+*.sublime-workspace
+*.wav
+*.mp3
+audio/train/data/*
