@@ -28,10 +28,10 @@ NUM_INPUTS = IMG_X * IMG_Y # Total number of pixels
 NUM_CLASSES = 12 # 12-tones
 
 # Validation
-TEST_SIZE=200
+TEST_SIZE=32
 
 # Train
-BATCH_SIZE=128
+BATCH_SIZE=32
 LEARNING_RATE=0.1
 
 # One-hot encode values in batch.
