@@ -131,7 +131,11 @@ Seed server:
     aws$ passwd
     aws$ cd bootstrap
     aws$ ./bootstrap-user.sh
-    aws$ ./install-gpu.sh
+
+Seed deepears:
+
+    $ . env.sh
+    $ ./bootstrap/seed.sh
 
 Copy CuDNN:
 
