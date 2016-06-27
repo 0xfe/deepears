@@ -4,7 +4,7 @@
 #    $ source env.sh
 #    $ bootstrap/seed.sh $TF1HOST
 
-if [ "$1" == "" -o "$2" == "" ]; then
+if [ "$1" == "" -a "$2" == "" ]; then
   echo "Usage: $0 [address] [sshuser]"
   exit -1
 fi
@@ -41,5 +41,6 @@ echo Seeding server $ADDRESS with bootstrap files...
 rsync -przvl --executability --stats bootstrap $SSHUSER@$ADDRESS:
 rsync -przvl --executability --stats src $SSHUSER@$ADDRESS:
 
-echo Kicking off bootstrap on server $ADDRESS...
-ssh $SSHUSER@$ADDRESS "cd bootstrap; ./install-gpu.sh"
+echo Go ahead and kicking off bootstrap on server $ADDRESS...
+echo    $ ssh $SSHUSER@$ADDRESS
+echo    $ cd bootstrap; ./install-gpu.sh

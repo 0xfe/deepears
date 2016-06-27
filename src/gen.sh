@@ -1,5 +1,5 @@
 #!/bin/sh
 
-./clean.sh
-./gen_midi_samples.rb
+src/clean.sh
+src/gen_midi_samples.rb
 

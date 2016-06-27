@@ -5,9 +5,18 @@ Sets up python virtualenv, and AWS env variables.
     $ source env.sh
     $ ssh mohit@$TF1HOST (or $TFDEVHOST)
 
+If instances aren't running:
+
+    $ aws ec2 start-instances --instance-ids $TF1
+
+To stop:
+
+    $ ssh ...; $ sudo shutdown now
+    $ $ aws ec2 stop-instances --instance-ids $TF1
+
 ## MIDI Sample Generation
 
-### Installation
+### Installation (Needs Ruby 2.0)
 
     $ gem install midilib
     $ brew install fluidsynth sox jq
@@ -18,7 +27,7 @@ Sets up python virtualenv, and AWS env variables.
 
 ### Generate MIDI
 
-  $ ./gen_midi_samples.rb
+  $ ./src/gen_midi_samples.rb
   $ play data/wav/*`
 
 ### To play
@@ -123,19 +132,68 @@ Add the following to ~/.ssh/config (so you don't have to keep typing -i):
 
 If you have ssh-agent: `$ ssh-add ~/.ssh/KEY_PAIR_NAME.pem`
 
+## Setup AWS GPU instance:
+
+    $ aws ec2 run-instances --image-id ami-fce3c696 --count 1 --instance-type g2.2xlarge --key-name tftrain --security-groups dev --block-device-mapping "[ { \"DeviceName\": \"/dev/sda1\", \"Ebs\": { \"VolumeSize\": 32 } } ]"
+
+    (Check aws.amazon.com to verify that instance is running)
+
+    $ aws ec2 create-tags --resources i-xxxxxxxx --tags Key=id,Value=tftrain1
+    $ . env.sh 
+
 Seed server:
 
     $ cd ~/w/static
-    $ ./seed.sh aws.dns.address hostname ubuntu
-    $ ssh mohit@aws.dns
+    $ ./seed.sh $TF1HOST tftrain1 ubuntu
+    $ ssh mohit@$TF1HOST
     aws$ passwd
     aws$ cd bootstrap
     aws$ ./bootstrap-user.sh
 
 Seed deepears:
 
-    $ . env.sh
-    $ ./bootstrap/seed.sh
+    $ ./bootstrap/seed.sh $TF1HOST
+    $ ssh mohit@$TF1HOST
+    $ cd bootstrap; ./install-gpu.sh
+
+Reboot machine and test nvidia:
+
+    $ sudo shutdown -r now
+    (...)
+    $ nvidia-smi
+    Mon Jun 27 11:25:34 2016       
+    +------------------------------------------------------+                       
+    | NVIDIA-SMI 352.93     Driver Version: 352.93         |                       
+    |-------------------------------+----------------------+----------------------+
+    | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+    | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+    |===============================+======================+======================|
+    |   0  GRID K520           Off  | 0000:00:03.0     Off |                  N/A |
+    | N/A   32C    P0    35W / 125W |     11MiB /  4095MiB |      0%      Default |
+    +-------------------------------+----------------------+----------------------+
+                                                                                
+    +-----------------------------------------------------------------------------+
+    | Processes:                                                       GPU Memory |
+    |  GPU       PID  Type  Process name                               Usage      |
+    |=============================================================================|
+    |  No running processes found                                                 |
+    +-----------------------------------------------------------------------------+
+
+Test:
+
+    $ ssh mohit@$TF1HOST
+    aws$ . tfenv.sh
+    aws$ python
+    >>> import tensorflow as tf
+    I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcublas.so locally
+    I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcudnn.so locally
+    I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcufft.so locally
+    I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcuda.so locally
+    I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcurand.so locally
+    >>> a = tf.constant("Boo!")
+    >>> tf.Session().run(a)
+
+## CuDNN Setup
 
 Copy CuDNN:
 
@@ -154,11 +212,11 @@ Add to `.bashrc` (probably already there):
 
 First convert WAV files to TFRecord format:
 
-    $ ./tfbuild.py
+    $ src/tfbuild.py
 
 Start training:
 
-    $ ./tftrain.py
+    $ src/tftrain.py
 
 ## Log (Singles)
 
