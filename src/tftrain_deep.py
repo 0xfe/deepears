@@ -28,14 +28,14 @@ import seaborn as sns
 N = 256  # FFT size
 IMG_X = 200  # this can be changed (max 229 for .330ms sample)
 IMG_Y = (N/2) + 1
-NUM_INPUTS = IMG_X * IMG_Y # Total number of pixels
+NUM_INPUTS = IMG_X * IMG_Y # Total number of inputs
 
 # Validation
 TEST_SIZE=32
 
 # Train
 BATCH_SIZE=32
-LEARNING_RATE=0.01
+LEARNING_RATE=0.1
 STEPS=100
 
 # One-hot encode values in batch.
@@ -45,23 +45,13 @@ def one_hot(batch, max_value):
     return b
 
 def decode_single(filename):
-    # Note that num_epochs here is None, so it'll just start from the
-    # top again when the input is done. Effectively allows you to
-    # loop forever.
     filename_queue = tf.train.string_input_producer([filename],
                                                     num_epochs=1)
-    # Unlike the TFRecordWriter, the TFRecordReader is symbolic
     reader = tf.TFRecordReader()
-    # One can read a single serialized example from a filename
-    # serialized_example is a Tensor of type string.
     _, serialized_example = reader.read(filename_queue)
-    # The serialized example is converted back to actual values.
-    # One needs to describe the format of the objects to be returned
     features = tf.parse_single_example(
         serialized_example,
         features={
-            # We know the length of both fields. If not the
-            # tf.VarLenFeature could be used
             'label': tf.FixedLenFeature([], tf.int64),
             'sample': tf.FixedLenFeature([NUM_INPUTS], tf.float32)
         })
@@ -76,29 +66,25 @@ def input_data(filename, batch_size):
     return samples_batch, labels_batch
 
 with tf.Session() as sess:
-    classifier = tf.contrib.learn.DNNClassifier(
-        n_classes=12,
-        hidden_units=[1000,100],
-        optimizer=tf.train.AdagradOptimizer(learning_rate=LEARNING_RATE),
-        dropout=0.1
-    )
-
-
     test_samples_batch, test_labels_batch = input_data("./data/singles.validation.tfrecords", TEST_SIZE)
     init = tf.initialize_all_variables()
     sess.run(init)
     tf.train.start_queue_runners(sess=sess)
-    
+
     test_samples = test_samples_batch.eval(session=sess)
     test_labels = test_labels_batch.eval(session=sess)
     teX, teY = test_samples, one_hot(test_labels, 12)
 
     try:
+        classifier = tf.contrib.learn.DNNClassifier(
+            n_classes=12,
+            hidden_units=[1000,100],
+            optimizer=tf.train.AdagradOptimizer(learning_rate=LEARNING_RATE),
+            dropout=0.1
+        )
         period = 0
         while True:
             print "Period: %d (%s)" % (period, str(datetime.datetime.now().time())) 
-            # print sess.run(labels_batch) # this works
-            # print sess.run(samples_batch) # this works
             classifier.partial_fit(input_fn=lambda: input_data("./data/singles.training.tfrecords", BATCH_SIZE), steps=STEPS)
             # predictions_training = classifier.predict_proba(training_features)
             predictions_validation = classifier.predict_proba(teX)
