@@ -32,7 +32,7 @@ TEST_SIZE=32
 
 # Train
 BATCH_SIZE=32
-LEARNING_RATE=0.1
+LEARNING_RATE=0.01
 
 # One-hot encode values in batch.
 def one_hot(batch, max_value):
@@ -162,7 +162,7 @@ with tf.Session() as sess:
             print "  testing... (%s)" % (str(datetime.datetime.now().time())) 
             predict_teY = sess.run(predict_softmax, feed_dict={X: teX, Y: teY, p_keep_conv: 1.0, p_keep_hidden: 1.0})
             predict_trY = sess.run(predict_softmax, feed_dict={X: trX, Y: trY, p_keep_conv: 1.0, p_keep_hidden: 1.0})
-            prediction = np.argmax(predict_teY)  # sess.run(predict_op, feed_dict={X: teX, Y: teY, p_keep_conv: 1.0, p_keep_hidden: 1.0})
+            prediction = sess.run(predict_op, feed_dict={X: teX, Y: teY, p_keep_conv: 1.0, p_keep_hidden: 1.0})
 
             # Show results
             print "  evaluating... (%s)" % (str(datetime.datetime.now().time()))
