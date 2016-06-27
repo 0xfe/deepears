@@ -12,6 +12,7 @@ from os import path
 import re
 import random
 import sys
+import datetime
 
 from sklearn import metrics
 from sklearn.metrics import confusion_matrix
@@ -30,11 +31,12 @@ IMG_Y = (N/2) + 1
 NUM_INPUTS = IMG_X * IMG_Y # Total number of pixels
 
 # Validation
-TEST_SIZE=1000
+TEST_SIZE=32
 
 # Train
-BATCH_SIZE=100
-LEARNING_RATE=10
+BATCH_SIZE=32
+LEARNING_RATE=0.01
+STEPS=100
 
 # One-hot encode values in batch.
 def one_hot(batch, max_value):
@@ -68,48 +70,50 @@ def decode_single(filename):
     sample = features['sample']
     return label, sample
 
-# get single examples
-label, sample = decode_single("./data/singles.training.tfrecords")
-v_label, v_sample = decode_single("./data/singles.validation.tfrecords")
-
-# groups examples into batches randomly
-samples_batch, labels_batch = tf.train.shuffle_batch([sample, label], batch_size=BATCH_SIZE, capacity=BATCH_SIZE * 2, min_after_dequeue=BATCH_SIZE)
-test_samples_batch, test_labels_batch = tf.train.shuffle_batch([v_sample, v_label], batch_size=TEST_SIZE, capacity=TEST_SIZE, min_after_dequeue=0)
-
-def input_data():
+def input_data(filename, batch_size):
+    label, sample = decode_single(filename)
+    samples_batch, labels_batch = tf.train.shuffle_batch([sample, label], batch_size=batch_size, capacity=batch_size * 2, min_after_dequeue=batch_size)
     return samples_batch, labels_batch
 
-def init_weights(shape):
-    return tf.Variable(tf.random_normal(shape, stddev=0.01))
+with tf.Session() as sess:
+    classifier = tf.contrib.learn.DNNClassifier(
+        n_classes=12,
+        hidden_units=[1000,100],
+        optimizer=tf.train.AdagradOptimizer(learning_rate=LEARNING_RATE),
+        dropout=0.1
+    )
 
 
-def model(X, w_h, w_h2, w_o, p_keep_input, p_keep_hidden):
-    X = tf.nn.dropout(X, p_keep_input)
-    h = tf.nn.relu(tf.matmul(X, w_h))
+    test_samples_batch, test_labels_batch = input_data("./data/singles.validation.tfrecords", TEST_SIZE)
+    init = tf.initialize_all_variables()
+    sess.run(init)
+    tf.train.start_queue_runners(sess=sess)
+    
+    test_samples = test_samples_batch.eval(session=sess)
+    test_labels = test_labels_batch.eval(session=sess)
+    teX, teY = test_samples, one_hot(test_labels, 12)
 
-    h = tf.nn.dropout(h, p_keep_hidden)
-    h2 = tf.nn.relu(tf.matmul(h, w_h2))
+    try:
+        period = 0
+        while True:
+            print "Period: %d (%s)" % (period, str(datetime.datetime.now().time())) 
+            # print sess.run(labels_batch) # this works
+            # print sess.run(samples_batch) # this works
+            classifier.partial_fit(input_fn=lambda: input_data("./data/singles.training.tfrecords", BATCH_SIZE), steps=STEPS)
+            # predictions_training = classifier.predict_proba(training_features)
+            predictions_validation = classifier.predict_proba(teX)
+            #  log_loss_training = metrics.log_loss(training_labels, predictions_training)
+            log_loss_validation = metrics.log_loss(teY, predictions_validation)
+            accuracy_validation = 0 # metrics.accuracy_score(test_labels, predictions_validation)
+            #  training_errors.append(log_loss_training)
+            print "  loss=%f, accuracy=%f" % (log_loss_validation, accuracy_validation)
+            period = period + 1
+    except tf.errors.OutOfRangeError, e:
+            print "All Done."
 
-    h2 = tf.nn.dropout(h2, p_keep_hidden)
-    return tf.matmul(h2, w_o)
+    sess.close()
 
-X = tf.placeholder("float", [None, NUM_INPUTS])
-Y = tf.placeholder("float", [None, 12])
-
-# NN layers (inputs, outputs)
-w_h = init_weights([NUM_INPUTS, 10000])
-w_h2 = init_weights([10000, 625])
-w_o = init_weights([625, 12])
-
-p_keep_input = tf.placeholder("float")
-p_keep_hidden = tf.placeholder("float")
-py_x = model(X, w_h, w_h2, w_o, p_keep_input, p_keep_hidden)
-
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(py_x, Y))
-train_op = tf.train.AdagradOptimizer(LEARNING_RATE).minimize(cost)
-predict_softmax = tf.nn.softmax(py_x)
-predict_op = tf.argmax(py_x, 1)
-
+"""
 training_errors = []
 validation_errors = []
 
@@ -149,7 +153,7 @@ with tf.Session() as sess:
 
     sess.close()
 
-"""
+
 for period in range(0,10):
         print "Period: ", period
         print sess.run(labels_batch)
