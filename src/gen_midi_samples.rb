@@ -29,7 +29,7 @@ $options = {
   tempo: 120,
   velocity_min: 100,
   velocity_max: 127,
-  soundfont: "./soundfont.sf2",
+  soundfont: "bootstrap/assets/soundfont.sf2",
   tmp_dir: "data/tmp",
   midi_dir: "data/midi",
   wav_dir: "data/wav",
