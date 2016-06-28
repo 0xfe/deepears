@@ -169,17 +169,10 @@ Seed server:
 
 Seed deepears:
 
+    $ aws s3 cp --recursive s3://tftrain/ bootstrap/assets/ --include '*'
     $ ./bootstrap/seed.sh $TF1HOST
     $ ssh mohit@$TF1HOST
     $ cd bootstrap; ./install-gpu.sh
-
-Optional: Copy training data (in parallel with above step):
-
-    FROM LOCAL $ tar -zcvf data.tar.gz data/*.tfrecords  
-    FROM S3    $ aws s3 cp s3://tftrain/singles.tfrecords.20160628.tar.gz data.tar.gz
-    $ scp data.tar.gz mohit@$TF1HOST:tmp
-    $ ssh mohit@$TF1HOST
-    aws$ mkdir -p data; cd data; tar -zxvf ../tmp/data.tar.gz
 
 Reboot machine and test nvidia:
 
@@ -217,6 +210,10 @@ Test:
     I tensorflow/stream_executor/dso_loader.cc:108] successfully opened CUDA library libcurand.so locally
     >>> a = tf.constant("Boo!")
     >>> tf.Session().run(a)
+
+Build from source:
+
+    $ cd bootstrap; ./build-tensorflow.sh
 
 ## CuDNN Setup
 
@@ -272,5 +269,17 @@ Test/training loss: 0.64/0.42
 ### June 28 2016
 Same as above.
 STEPS: 20000
+LR: 0.1
 Test: {'accuracy': 0.74781251, 'loss': 0.67122149}  
 
+Layers: 25800, 1000, 300, 12
+STEPS: 10000
+LR: 0.3 (fail)
+LR: 0.1  
+Test: {'accuracy': 0.63575, 'loss': 0.95323491}
+
+Layers: 25800, 1000, 300, 50, 12
+STEPS: 12000
+LR: 0.2  
+Dropout: 0.2
+Test: loss = 0.961167, accuracy = 0.634277
