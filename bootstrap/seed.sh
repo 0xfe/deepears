@@ -41,6 +41,7 @@ echo Seeding server $ADDRESS with bootstrap files...
 rsync -przvl --executability --stats bootstrap $SSHUSER@$ADDRESS:
 rsync -przvl --executability --stats src $SSHUSER@$ADDRESS:
 
-echo Go ahead and kicking off bootstrap on server $ADDRESS...
-echo    $ ssh $SSHUSER@$ADDRESS
-echo    $ cd bootstrap; ./install-gpu.sh
+echo Go ahead and kick off bootstrap on server $ADDRESS...
+echo    "$ mosh $SSHUSER@$ADDRESS"
+echo    "$ screen"
+echo    "$ cd bootstrap; ./install-gpu.sh"
