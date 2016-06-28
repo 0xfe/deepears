@@ -37,8 +37,8 @@ TEST_SIZE=32
 
 # Train
 BATCH_SIZE=32
-LEARNING_RATE=0.3
-STEPS=10000
+LEARNING_RATE=0.2
+STEPS=20000
 
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.training import saver
@@ -203,14 +203,14 @@ with tf.Session() as sess:
         print "Training (%s):" % now()
         classifier = tf.contrib.learn.DNNClassifier(
             n_classes=12,
-            hidden_units=[1000, 300],
+            hidden_units=[1000, 300, 50],
             optimizer=tf.train.AdagradOptimizer(learning_rate=LEARNING_RATE),
-            dropout=0.1,
+            dropout=0.2,
             config=tf.contrib.learn.RunConfig(num_cores=16)
         )
         classifier.fit(input_fn=training_data, steps=STEPS,
-            monitors=[EarMonitor(input_fn=test_data, name="validation", eval_steps=100),
-                      EarMonitor(input_fn=training_data, name="training", eval_steps=100)])
+            monitors=[EarMonitor(input_fn=test_data, name="validation", eval_steps=128),
+                      EarMonitor(input_fn=training_data, name="training", eval_steps=128)])
     except tf.errors.OutOfRangeError, e:
             print "All Done."
 
