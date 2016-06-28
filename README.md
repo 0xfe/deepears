@@ -239,3 +239,13 @@ Number of examples/batches: ~19000, 1900 batches
    + CM looks pretty good
    + lots of G predictions
 
+### June 27 2016
+DNNClassifier
+Layers: 25800, 1000, 100, 12
+LR: 0.1
+STEPS: 10000
+Dropout: 0.1
+Test/training accuracy: 0.73/0.83
+Test/training loss: 0.64/0.42
+
+
