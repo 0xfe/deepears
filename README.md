@@ -27,9 +27,9 @@ Sync:
     $ gem install midilib
     $ brew install fluidsynth sox jq
 
-### Get soundfont
+### Get soundfont (see AWS setup instructions below)
 
-    Browse: https://musescore.org/en/handbook/soundfont#list
+    $ aws s3 cp s3://tftrain/soundfont.sf2 .
 
 ### Generate MIDI
 
@@ -69,7 +69,7 @@ To add noise:
 
     $ sox ~/Downloads/test1.wav -p synth whitenoise vol 0.1 | sox -m ~/Downloads/test1.wav - ~/Downloads/noisy.wav
 
-## TensorFlow Audio Training
+## TensorFlow Audio Training (Mac)
 
 ### Install NumPy, SciPy, Pandas, TensorFlow on Mac
 
@@ -88,6 +88,15 @@ Install Tensorflow:
     (tf)$ pip install --upgrade $TF_BIN
     
 Note: You may need to add flag to 'pip install' of TF: --ignore-installed six (details)
+
+### Install Tensorflow from Source
+
+    $ brew install bazel swig coreutils
+    $ brew cask install cuda (note down version)
+
+Download cuDNN for cuda version OSX from: https://developer.nvidia.com/rdp/cudnn-download
+
+
 
 ### AWS
 
@@ -116,8 +125,8 @@ Create non-GPU dev instance (`t2.micro`, `m4.large`) for development:
 Add a name tag:
 
     $ aws ec2 describe-instances
-    $ aws ec2 create-tags --resources i-xxxxxxxx --tags Key=id,Value=tftrain1  # GPU
-    $ aws ec2 create-tags --resources i-xxxxxxxx --tags Key=id,Value=tfdev     # CPU
+    $ aws ec2 create-tags --resources i-xxxxxxxx --tags Key=id,Value=tftrain1 Key=project,Value=deepears # GPU
+    $ aws ec2 create-tags --resources i-xxxxxxxx --tags Key=id,Value=tfdev Key=project,Value=deepears    # CPU
 
 Get Instance ID and public DNS name:
 
@@ -155,6 +164,8 @@ Seed server:
     aws$ passwd
     aws$ cd bootstrap
     aws$ ./bootstrap-user.sh
+    aws$ ./install-tools.sh
+    aws$ sudo vi /etc/hosts (add tftrain1 to localhost)
 
 Seed deepears:
 
@@ -162,10 +173,18 @@ Seed deepears:
     $ ssh mohit@$TF1HOST
     $ cd bootstrap; ./install-gpu.sh
 
+Optional: Copy training data (in parallel with above step):
+
+    FROM LOCAL $ tar -zcvf data.tar.gz data/*.tfrecords  
+    FROM S3    $ aws s3 cp s3://tftrain/singles.tfrecords.20160628.tar.gz data.tar.gz
+    $ scp data.tar.gz mohit@$TF1HOST:tmp
+    $ ssh mohit@$TF1HOST
+    aws$ mkdir -p data; cd data; tar -zxvf ../tmp/data.tar.gz
+
 Reboot machine and test nvidia:
 
     $ sudo shutdown -r now
-    (...)
+    (... wait to ssh back in ...)
     $ nvidia-smi
     Mon Jun 27 11:25:34 2016       
     +------------------------------------------------------+                       
@@ -203,6 +222,7 @@ Test:
 
 Copy CuDNN:
 
+    $ aws s3 cp cudnn-7.0-linux-x64-v4.0-prod.tgz .
     $ scp cudnn-7.0-linux-x64-v4.0-prod.tgz mohit@ec2-52-87-235-160.compute-1.amazonaws.com:tmp
     $ ssh mohit@aws.dns
     aws$ sudo cp cuda/include/* /usr/local/cuda/include
@@ -222,7 +242,8 @@ First convert WAV files to TFRecord format:
 
 Start training:
 
-    $ src/tftrain.py
+    $ src/tftrain.py  (OR)
+    $ src/tftrain_deep.py
 
 ## Log (Singles)
 
@@ -240,7 +261,7 @@ Number of examples/batches: ~19000, 1900 batches
    + lots of G predictions
 
 ### June 27 2016
-DNNClassifier
+DNNClassifier (tftrain_deep.py)
 Layers: 25800, 1000, 100, 12
 LR: 0.1
 STEPS: 10000
@@ -248,4 +269,8 @@ Dropout: 0.1
 Test/training accuracy: 0.73/0.83
 Test/training loss: 0.64/0.42
 
+### June 28 2016
+Same as above.
+STEPS: 20000
+Test: {'accuracy': 0.74781251, 'loss': 0.67122149}  
 

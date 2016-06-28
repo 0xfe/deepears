@@ -120,9 +120,9 @@ if $options[:do_singles] then
   puts "Generating single tones..."
   labels = File.open(midi_dir + "/singles.txt", "w")
 
-  octaves = [3, 4, 5, 6]
+  octaves = [2, 3, 4, 5, 6, 7]
   notes = (0..11)
-  bends = [0, 6000, 7000, 7500, 7700, 8500, 9000, 9500, 10000]
+  bends = [0, 6000, 7000, 7500, 7700, 8300, 8700, 9000, 9500, 10000]
 
   total_midi = octaves.size * notes.size * PATCHES.size * bends.size
   total_wav = total_midi * 2 # attack, sustain

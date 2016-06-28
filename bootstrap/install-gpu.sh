@@ -49,6 +49,7 @@ sudo cp cuda/lib64/libcudnn* /usr/local/cuda/lib64
 sudo chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
 
 # Tensorflow and math stuff
+cd ~
 sudo pip install --upgrade virtualenv
 virtualenv tf
 source tf/bin/activate
