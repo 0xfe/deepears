@@ -13,6 +13,10 @@ rm ~/tmp/*
 . ~/tfenv.sh
 export DEBIAN_FRONTEND=noninteractive
 
+BAZEL_BUILD_GPU="--config=cuda"
+BAZEL_BUILD_CPU=""
+BAZEL_BUILD_FLAGS=$BAZEL_BUILD_GPU
+
 # Install bazel: http://www.bazel.io/docs/install.html#install-on-ubuntu
 
 sudo add-apt-repository ppa:webupd8team/java
@@ -39,6 +43,6 @@ echo Hit return to start.
 read
 
 ./configure
-bazel build -c opt --config=cuda //tensorflow/tools/pip_package:build_pip_package
+bazel build -c opt $BAZEL_BUILD_FLAGS //tensorflow/tools/pip_package:build_pip_package
 bazel-bin/tensorflow/tools/pip_package/build_pip_package ~/tmp/tensorflow_pkg
 pip install --upgrade ~/tmp/tensorflow_pkg/*.whl

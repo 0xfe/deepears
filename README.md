@@ -36,7 +36,9 @@ Start training:
     $ src/tftrain.py  (OR)
     $ src/tftrain_deep.py
  
-Start tensorboard:
+Start tensorbo
+
+ard:
 
     $ tensorboard --logdir model --port 3000
 
@@ -61,6 +63,7 @@ Layers: 25800, 1000, 100, 12
 LR: 0.1
 STEPS: 10000
 Dropout: 0.1
+Batch size: 32
 Test/training accuracy: 0.73/0.83
 Test/training loss: 0.64/0.42
 
@@ -88,3 +91,8 @@ LR: 0.2
 CPU (GCE):
 19:32:39.324272 (validation): evaluation (step 19900): loss = 0.625723, accuracy = 0.757324
 19:32:43.120241 (training): evaluation (step 19900): loss = 0.286668, accuracy = 0.883301
+
+### June 29 2016
+
+Increase batch size 32 -> 128
+New data set
