@@ -10,9 +10,13 @@
 THISDIR=`pwd`
 mkdir -p ~/tmp
 
+GPU_SUPPORT=true
+
 CUDA_URL=http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.5-18_amd64.deb
-# TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.9.0-cp27-none-linux_x86_64.whl
-TF_BINARY_URL=$THISDIR/assets/tensorflow-0.9.0-cp27-none-linux_x86_64.whl
+TF_BINARY_URL_WEB=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.9.0-cp27-none-linux_x86_64.whl
+TF_BINARY_URL_GPU=$THISDIR/assets/tensorflow-0.9.0-cp27-none-linux_x86_64.whl
+TF_BINARY_URL_CPU=$THISDIR/assets/tf-linux-cpu/tensorflow-0.8.0-py2-none-any.whl
+TF_BINARY_URL=$TF_BINARY_URL_CPU
 
 cp tfenv.sh $HOME
 cd $HOME
@@ -34,20 +38,22 @@ sudo update-alternatives --install /usr/bin/gem gem /usr/bin/gem2.0 10
 
 sudo gem install midilib
 
-# CUDA and cuDNN (for GPU)
-# https://www.tensorflow.org/versions/r0.9/get_started/os_setup.html#optional-install-cuda-gpus-on-linux
+if [ "$GPU_SUPPORT" == "true" ]; then
+    # CUDA and cuDNN (for GPU)
+    # https://www.tensorflow.org/versions/r0.9/get_started/os_setup.html#optional-install-cuda-gpus-on-linux
 
-cd ~/tmp
-curl -O $CUDA_URL
-sudo dpkg -i cuda-*.deb
-sudo apt-get update
-sudo apt-get install cuda
+    cd ~/tmp
+    curl -O $CUDA_URL
+    sudo dpkg -i cuda-*.deb
+    sudo apt-get update
+    sudo apt-get install cuda
 
-cd ~/tmp
-tar -zxvf $THISDIR/assets/cudnn-7.0-linux-x64-v4.0-prod.tgz
-sudo cp cuda/include/* /usr/local/cuda/include
-sudo cp cuda/lib64/libcudnn* /usr/local/cuda/lib64
-sudo chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
+    cd ~/tmp
+    tar -zxvf $THISDIR/assets/cudnn-7.0-linux-x64-v4.0-prod.tgz
+    sudo cp cuda/include/* /usr/local/cuda/include
+    sudo cp cuda/lib64/libcudnn* /usr/local/cuda/lib64
+    sudo chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
+fi
 
 # Tensorflow and math stuff
 cd ~

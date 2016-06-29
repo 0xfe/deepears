@@ -33,10 +33,10 @@ IMG_Y = (N/2) + 1
 NUM_INPUTS = IMG_X * IMG_Y # Total number of inputs
 
 # Validation
-TEST_SIZE=32
+TEST_SIZE=128
 
 # Train
-BATCH_SIZE=32
+BATCH_SIZE=128
 LEARNING_RATE=0.2
 STEPS=20000
 
