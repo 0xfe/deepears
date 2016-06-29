@@ -11,8 +11,8 @@
 
 ### Generate MIDI
 
-  $ ./src/gen_midi_samples.rb
-  $ play data/wav/*`
+    $ ./src/gen_midi_samples.rb
+    $ play data/wav/*`
 
 ### To play
 
@@ -20,7 +20,7 @@
 
 ### To convert to WAV
 
-    $  fluid synth -l -i -a file ~/w/audio/octave/FluidR3_GM.sf2 from_scratch.mid -F raw_audio
+    $ fluid synth -l -i -a file ~/w/audio/octave/FluidR3_GM.sf2 from_scratch.mid -F raw_audio
     $ sox -t raw -r 44100 -e signed -b 16 -c 2 raw_audio audio.wav
 
 ### Mix down to 1 channel and normalize
