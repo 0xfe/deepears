@@ -147,19 +147,34 @@ Add the following to ~/.ssh/config (so you don't have to keep typing -i):
 
 If you have ssh-agent: `$ ssh-add ~/.ssh/KEY_PAIR_NAME.pem`
 
-## Setup AWS GPU instance:
+## Setup AWS GPU instance or GCE highcpu instance
 
-    $ aws ec2 run-instances --image-id ami-fce3c696 --count 1 --instance-type g2.2xlarge --key-name tftrain --security-groups dev --block-device-mapping "[ { \"DeviceName\": \"/dev/sda1\", \"Ebs\": { \"VolumeSize\": 32 } } ]"
+### AWS
+
+Instance prices: https://aws.amazon.com/ec2/pricing/. Use `g2.2xlarge` for GPU (with 8 CPU cores, 16GB RAM), and `c4.4xlarge` for 16-core CPU (30GB RAM).
+
+    $ aws ec2 run-instances --image-id ami-fce3c696 --count 1 --instance-type g2.2xlarge --key-name tftrain --security-groups dev --block-device-mapping "[ { \"DeviceName\": \"/dev/sda1\", \"Ebs\": { \"VolumeSize\": 64 } } ]"
 
     (Check aws.amazon.com to verify that instance is running)
 
     $ aws ec2 create-tags --resources i-xxxxxxxx --tags Key=id,Value=tftrain1
     $ . env.sh 
 
+### GCE
+
+    $ gcloud compute instances create "tftrain" --machine-type "n1-highcpu-16" --network "default" --metadata "id=gtftrain1" --no-restart-on-failure --maintenance-policy "MIGRATE" --scopes default="https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management" --tags "http-server","https-server","deepears" --image "/ubuntu-os-cloud/ubuntu-1404-trusty-v20160627" --boot-disk-size "80" --boot-disk-type "pd-standard" --boot-disk-device-name "tftrain"
+
+    # create keys and update ~/.ssh/config
+    $ gcloud compute config-ssh
+    $ . env.sh
+
+### Install DeepEars
+
 Seed server:
 
     $ cd ~/w/static
-    $ ./seed.sh $TF1HOST tftrain1 ubuntu
+    $ AWS: ./seed.sh $TF1HOST tftrain1 ubuntu
+    $ GCE: ./seed.sh $TF1GHOST tftrain1 mmuthanna
     $ ssh mohit@$TF1HOST
     aws$ passwd
     aws$ cd bootstrap
@@ -172,6 +187,7 @@ Seed deepears:
     $ aws s3 cp --recursive s3://tftrain/ bootstrap/assets/ --include '*'
     $ ./bootstrap/seed.sh $TF1HOST
     $ ssh mohit@$TF1HOST
+    $ screen
     $ cd bootstrap; ./install-gpu.sh
 
 Reboot machine and test nvidia:
@@ -215,6 +231,24 @@ Build from source:
 
     $ cd bootstrap; ./build-tensorflow.sh
 
+## Google Cloud
+
+Docs: https://cloud.google.com/compute/docs/gcloud-compute/
+
+    $ gcloud config configurations activate deepears
+    $ gcloud auth login
+    $ gcloud config list
+    $ gcloud compute instances list
+
+Create big machine:
+
+    $ gcloud compute instances create "tftrain" --machine-type "n1-highcpu-16" --network "default" --metadata "id=gtftrain1" --no-restart-on-failure --maintenance-policy "MIGRATE" --scopes default="https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management" --tags "http-server","https-server","deepears" --image "/ubuntu-os-cloud/ubuntu-1404-trusty-v20160627" --boot-disk-size "80" --boot-disk-type "pd-standard" --boot-disk-device-name "tftrain"
+    $ gcloud compute instances stop tftrain
+    $ gcloud compute instances start tftrain
+
+    # create keys and update ~/.ssh/config
+    $ gcloud compute config-ssh
+
 ## CuDNN Setup
 
 Copy CuDNN:
@@ -241,6 +275,10 @@ Start training:
 
     $ src/tftrain.py  (OR)
     $ src/tftrain_deep.py
+ 
+ Start tensorboard:
+
+    $ $ tensorboard --logdir model --port 3000
 
 ## Log (Singles)
 
@@ -283,3 +321,10 @@ STEPS: 12000
 LR: 0.2  
 Dropout: 0.2
 Test: loss = 0.961167, accuracy = 0.634277
+
+LR: 0.2
+16:03:38.733830 (training): evaluation (step 18700): loss = 1.08154, accuracy = 0.599609  
+
+CPU (GCE):
+19:32:39.324272 (validation): evaluation (step 19900): loss = 0.625723, accuracy = 0.757324
+19:32:43.120241 (training): evaluation (step 19900): loss = 0.286668, accuracy = 0.883301
