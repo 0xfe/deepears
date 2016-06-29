@@ -58,11 +58,12 @@ Seed server:
 
 Seed deepears:
 
-    $ aws s3 cp --recursive s3://tftrain/ bootstrap/assets/ --include '*'
+    $ mkdir -p bootstrap/assets; aws s3 cp --recursive s3://tftrain/ bootstrap/assets/ --include '*'
     $ ./bootstrap/seed.sh $TF1HOST
     $ ssh mohit@$TF1HOST
     $ screen
-    $ cd bootstrap; ./install-gpu.sh
+    $ cd bootstrap
+    $ GPU_SUPPORT=true ./install-tensorflow.sh
 
 Reboot machine and test nvidia:
 
