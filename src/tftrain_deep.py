@@ -38,7 +38,7 @@ TEST_SIZE=128
 # Train
 BATCH_SIZE=128
 LEARNING_RATE=0.2
-STEPS=20000
+STEPS=40000
 
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.training import saver
@@ -205,9 +205,10 @@ with tf.Session() as sess:
             n_classes=12,
             hidden_units=[1000, 300, 50],
             optimizer=tf.train.AdagradOptimizer(learning_rate=LEARNING_RATE),
-            dropout=0.2,
+            dropout=0.3,
             config=tf.contrib.learn.RunConfig(num_cores=16),
-            model_dir="model"
+            model_dir="model",
+            gradient_clip_norm=5.0
         )
         classifier.fit(input_fn=training_data, steps=STEPS,
             monitors=[EarMonitor(input_fn=test_data, name="validation", eval_steps=128),
