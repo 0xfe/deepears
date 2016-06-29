@@ -2,7 +2,7 @@
 #
 # Sync local state to remote server.
 
-ADDRESS=$TF1HOST
+ADDRESS=$TF1GHOST
 SSHUSER=mohit
 
 if [ ! -e bootstrap ]; then

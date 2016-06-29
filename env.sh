@@ -19,6 +19,10 @@ export TFDEVHOST=`aws ec2 describe-instances --filters Name=tag:id,Values=$CPUHO
 export TF1=`aws ec2 describe-instances --filters Name=tag:id,Values=$GPUHOST | jq -r '.Reservations[0].Instances[0].InstanceId'`
 export TF1HOST=`aws ec2 describe-instances --filters Name=tag:id,Values=$GPUHOST | jq -r '.Reservations[0].Instances[0].PublicDnsName'`
 
+# Gcloud
+export TF1G=tftrain
+export TF1GHOST=tftrain.us-east1-b.deepears-1356
+
 echo "CPU ($CPUHOST):"
 echo "  TFDEV=$TFDEV"
 echo "  TFDEVHOST=$TFDEVHOST"

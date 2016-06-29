@@ -12,7 +12,7 @@ mkdir -p ~/tmp
 
 CUDA_URL=http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.5-18_amd64.deb
 # TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.9.0-cp27-none-linux_x86_64.whl
-TF_BINARY_URL=$THISDIR/assets/tensorflow-20160628-linux-gpu.whl
+TF_BINARY_URL=$THISDIR/assets/tensorflow-0.9.0-cp27-none-linux_x86_64.whl
 
 cp tfenv.sh $HOME
 cd $HOME
@@ -59,6 +59,7 @@ pip install --upgrade $TF_BINARY_URL
 
 cd ~
 mkdir -p data
-tar -zxvf $THISDIR/assets/singles.tfrecords.20160628.tar.gz data/
+cd data
+tar -zxvf $THISDIR/assets/singles.tfrecords.20160628.tar.gz
 
 echo Reboot your computer to verify nvidia driver is loaded: nvidia-smi

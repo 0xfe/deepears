@@ -206,7 +206,8 @@ with tf.Session() as sess:
             hidden_units=[1000, 300, 50],
             optimizer=tf.train.AdagradOptimizer(learning_rate=LEARNING_RATE),
             dropout=0.2,
-            config=tf.contrib.learn.RunConfig(num_cores=16)
+            config=tf.contrib.learn.RunConfig(num_cores=16),
+            model_dir="model"
         )
         classifier.fit(input_fn=training_data, steps=STEPS,
             monitors=[EarMonitor(input_fn=test_data, name="validation", eval_steps=128),
