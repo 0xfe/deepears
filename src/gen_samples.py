@@ -25,8 +25,9 @@ class Note:
 
     # Takes a note in the form "C#4", "Bb2", "A5", etc. and returns
     # the MIDI note number.
-    def note(str):
-        matches = re.match('^([ABCDEFGabcdefg])([b#]?)([0-9])$')
+    @classmethod
+    def note(cls, str):
+        matches = re.match('^([ABCDEFGabcdefg])([b#]?)([0-9])$', str)
 
         note = matches.group(1).lower()
         acc = matches.group(2).lower()
@@ -35,19 +36,21 @@ class Note:
         shift = 0
         if acc == "b":
             shift -= 1
-        else if acc == '#':
+        elif acc == '#':
             shift += 1
 
-        value = ((octave+1) * 12) + Values[note] + shift
-        return int(value.to_i)
+        value = ((octave+1) * 12) + cls.values[note] + shift
+        return int(value)
 
-degrees  = [60, 62, 64, 65, 67, 69, 71, 72] # MIDI note number
-track    = 0
-channel  = 0
-time     = 0   # In beats
+N = Note.note("C4")
+print(N)
+degrees = [N, 62, 64, 65, 67, 69, 71, 72]
+track = 0
+channel = 0
+time = 0   # In beats
 duration = 1   # In beats
-tempo    = 60  # In BPM
-volume   = 100 # 0-127, as per the MIDI standard
+tempo = 60  # In BPM
+volume = 100 # 0-127, as per the MIDI standard
 
 MyMIDI = MIDIFile(1) # One track, defaults to format 1 (tempo track
                      # automatically created)
