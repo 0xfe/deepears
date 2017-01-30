@@ -180,7 +180,7 @@ class Song:
         return track
 
     def write(self, file_name):
-        file = MIDIFile(len(self.tracks))
+        file = MIDIFile(len(self.tracks), adjust_origin=True)
         for x in range(0, len(self.tracks)):
             self.tracks[x].write_to(file, x)
 
@@ -204,8 +204,9 @@ class Sample:
             self.track.add_note(Note.note(pitch), 1)
         self.song.write(self.file)
 
-sample = Sample("c-minor.mid")
-sample.write_chord(Chord.Min, "C4")
+if __name__ == "__main__":
+    sample = Sample("c-minor.mid")
+    sample.write_chord(Chord.Min, "C4")
 
-sample = Sample("notes.mid") 
-sample.write_notes(["C4", "D4", "E4"])
+    sample = Sample("notes.mid") 
+    sample.write_notes(["C4", "D4", "E4"])
