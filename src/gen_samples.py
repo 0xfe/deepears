@@ -171,8 +171,6 @@ class Track:
                          event["time"], event["duration"], event["volume"])
 
 class Song:
-    DEBUG = True
-
     def __init__(self):
         self.tracks = []
 
@@ -188,19 +186,26 @@ class Song:
 
         with open(file_name, "wb") as out:
             file.writeFile(out)
-    
-song = Song()
-track = song.new_track("Test")
-track.set_tempo(60)
-track.set_program(0)
 
-# Add a chord
-track.add_chord(Chord.gen_chord(Chord.Min, Note.note("C4")), 1)
+class Sample:
+    def __init__(self, file):
+        self.song = Song()
+        self.track = self.song.new_track("Sample")
+        self.track.set_tempo(60)
+        self.track.set_program(0)
+        self.file = file
 
-# Add some notes
-N = Note.note
-degrees = [N("C4"), N("D4"), N("E4")]
-for pitch in degrees:
-    track.add_note(pitch, 1)
+    def write_chord(self, type, root):
+        self.track.add_chord(Chord.gen_chord(type, Note.note(root)), 1)
+        self.song.write(self.file)
 
-song.write("minor-scale.mid")
+    def write_notes(self, notes):
+        for pitch in notes:
+            self.track.add_note(Note.note(pitch), 1)
+        self.song.write(self.file)
+
+sample = Sample("c-minor.mid")
+sample.write_chord(Chord.Min, "C4")
+
+sample = Sample("notes.mid") 
+sample.write_notes(["C4", "D4", "E4"])
