@@ -124,28 +124,53 @@ class Chord:
     @classmethod
     def gen_chord(cls, intervals, root):
         return [root] + map(lambda i: root + i, intervals)
+    
+class Track:
+    def __init__(self, name):
+        self.name = name
+        self.events = []
+        self.time = 0     # in beats
+        self.tempo = 0
+        self.program = 0
+
+    def set_tempo(self, tempo):
+        self.tempo = tempo
+
+    def set_program(self, program):
+        self.program = program
+
+    def add_note(self, channel, pitch, duration, volume=100):
+        self.events.append({
+            "type": "note",
+            "channel": channel,
+            "pitch": pitch,
+            "time": self.time,
+            "duration": duration,
+            "volume": volume
+        })
+        self.time += duration
+
+    def write_to(self, song, track_num):
+        song.addTempo(track_num, self.time, self.tempo)
+        for event in self.events:
+            song.addNote(track_num, event["channel"], event["pitch"],
+                         event["time"], event["duration"], event["volume"])
 
 
-N = Note.note("C4")
-print(N)
 print Chord.gen_chord(Chord.Min, Note.note("C4"))
 
-degrees = [N, 62, 64, 65, 67, 69, 71, 72]
-track = 0
-channel = 0
-time = 0   # In beats
-duration = 1   # In beats
-tempo = 60  # In BPM
-volume = 100 # 0-127, as per the MIDI standard
+song = MIDIFile(1)
+track = Track("Test")
+track.set_tempo(60)
+track.set_program(0)
 
-MyMIDI = MIDIFile(1) # One track, defaults to format 1 (tempo track
-                     # automatically created)
-MyMIDI.addTempo(track,time, tempo)
-
+N = Note.note
+degrees = [N("C4"), N("D4"), N("E4")]
 for pitch in degrees:
-    MyMIDI.addNote(track, channel, pitch, time, duration, volume)
-    time = time + 1
+    track.add_note(0, pitch, 1)
+
+track.write_to(song, 0)
 
 with open("major-scale.mid", "wb") as output_file:
-    MyMIDI.writeFile(output_file)
+    song.writeFile(output_file)
 
