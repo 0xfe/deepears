@@ -139,16 +139,30 @@ class Track:
     def set_program(self, program):
         self.program = program
 
-    def add_note(self, channel, pitch, duration, volume=100):
+    def add_note(self, pitch, duration, volume=100):
         self.events.append({
             "type": "note",
-            "channel": channel,
+            "channel": 0,
             "pitch": pitch,
             "time": self.time,
             "duration": duration,
             "volume": volume
         })
         self.time += duration
+
+    def add_chord(self, pitches, duration, volume=100):
+        channel = 0
+        for pitch in pitches:
+            self.events.append({
+                "type": "note",
+                "channel": channel,
+                "pitch": pitch,
+                "time": self.time,
+                "duration": duration,
+                "volume": volume
+            })
+            self.time += duration
+            channel += 1
 
     def write_to(self, song, track_num):
         song.addTempo(track_num, self.time, self.tempo)
@@ -175,18 +189,18 @@ class Song:
         with open(file_name, "wb") as out:
             file.writeFile(out)
     
-
-
-print Chord.gen_chord(Chord.Min, Note.note("C4"))
-
 song = Song()
 track = song.new_track("Test")
 track.set_tempo(60)
 track.set_program(0)
 
+# Add a chord
+track.add_chord(Chord.gen_chord(Chord.Min, Note.note("C4")), 1)
+
+# Add some notes
 N = Note.note
 degrees = [N("C4"), N("D4"), N("E4")]
 for pitch in degrees:
-    track.add_note(0, pitch, 1)
+    track.add_note(pitch, 1)
 
 song.write("minor-scale.mid")
