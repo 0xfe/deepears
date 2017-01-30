@@ -5,6 +5,8 @@
     $ gem install midilib
     $ brew install fluidsynth sox jq
 
+    For python version (incomplete): $ pip install MIDIlib
+
 ### Get soundfont (see AWS setup instructions below)
 
     $ aws s3 cp s3://tftrain/soundfont.sf2 .
