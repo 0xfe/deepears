@@ -156,11 +156,31 @@ class Track:
             song.addNote(track_num, event["channel"], event["pitch"],
                          event["time"], event["duration"], event["volume"])
 
+class Song:
+    DEBUG = True
+
+    def __init__(self):
+        self.tracks = []
+
+    def new_track(self, name):
+        track = Track(name)
+        self.tracks.append(track)
+        return track
+
+    def write(self, file_name):
+        file = MIDIFile(len(self.tracks))
+        for x in range(0, len(self.tracks)):
+            self.tracks[x].write_to(file, x)
+
+        with open(file_name, "wb") as out:
+            file.writeFile(out)
+    
+
 
 print Chord.gen_chord(Chord.Min, Note.note("C4"))
 
-song = MIDIFile(1)
-track = Track("Test")
+song = Song()
+track = song.new_track("Test")
 track.set_tempo(60)
 track.set_program(0)
 
@@ -169,8 +189,4 @@ degrees = [N("C4"), N("D4"), N("E4")]
 for pitch in degrees:
     track.add_note(0, pitch, 1)
 
-track.write_to(song, 0)
-
-with open("major-scale.mid", "wb") as output_file:
-    song.writeFile(output_file)
-
+song.write("minor-scale.mid")
