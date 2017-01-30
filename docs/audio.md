@@ -4,11 +4,15 @@
 
     $ gem install midilib
     $ brew install fluidsynth sox jq
+    Linux: $ apt-get install fluidsynth sox jq
 
     For python version (incomplete): $ pip install MIDIlib
 
 ### Get soundfont (see AWS setup instructions below)
 
+    $ pip install awscli
+    $ gpg2 -d awskey.csv.gpg
+    $ aws configure (use output from above, region: us-east-1)
     $ aws s3 cp s3://tftrain/soundfont.sf2 .
 
 ### Generate MIDI
@@ -22,7 +26,7 @@
 
 ### To convert to WAV
 
-    $ fluid synth -l -i -a file ~/w/audio/octave/FluidR3_GM.sf2 from_scratch.mid -F raw_audio
+    $ fluidsynth -l -i -a file ~/w/audio/octave/FluidR3_GM.sf2 from_scratch.mid -F raw_audio
     $ sox -t raw -r 44100 -e signed -b 16 -c 2 raw_audio audio.wav
 
 ### Mix down to 1 channel and normalize

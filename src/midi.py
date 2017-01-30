@@ -161,7 +161,6 @@ class Track:
                 "duration": duration,
                 "volume": volume
             })
-            self.time += duration
             channel += 1
 
     def write_to(self, song, track_num):
