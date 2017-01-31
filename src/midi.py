@@ -1,14 +1,42 @@
 '''
-Python implementation of gen_midi_samples.rb.
+Python MIDI abstractions for generating synthetic audio
+samples. Only implements the minimum required for simple
+audio snippets.
 
 Requires:
 $ pip install MIDIUtil
-
 '''
 
 import re
-
 from midiutil.MidiFile import MIDIFile
+
+GM_PATCHES = [
+  0, # Acoustic Grand Piano
+  3, # Honky-tonk Piano
+  6, # Harpsichord
+  11, # Vibraphone
+  16, # Drawbar Organ
+  19, # Church Organ
+  22, # Harmonica
+  24, # Acoustic Guitar (nylon)
+  26, # Electric Guitar (jazz)
+  30, # Distortion Guitar
+  32, # Acoustic Bass
+  33, # Electric Bass (finger)
+  40, # Violin,
+  42, # Cello
+  48, # String Ensemble 1
+  51, # SynthStrings 2
+  52, # Choir Aahs
+  56, # Trumpet
+  57, # Trombone
+  61, # Brass Section
+  65, # Alto Sax
+  66, # Tenor Sax
+  71, # Clarinet
+  73, # Flute
+  78 # Whistle
+]
 
 class Note:
     values = {
@@ -132,6 +160,7 @@ class Track:
         self.time = 0     # in beats
         self.tempo = 0
         self.program = 0
+        self.num_channels = 1
 
     def set_tempo(self, tempo):
         self.tempo = tempo
@@ -162,11 +191,15 @@ class Track:
                 "volume": volume
             })
             channel += 1
+        self.num_channels = channel
 
-    def write_to(self, song, track_num):
-        song.addTempo(track_num, self.time, self.tempo)
+    def write_to(self, backend, track_num):
+        backend.addTempo(track_num, self.time, self.tempo)
+        for channel in range(0, self.num_channels):
+            backend.addProgramChange(track_num, channel, 0, self.program)
+
         for event in self.events:
-            song.addNote(track_num, event["channel"], event["pitch"],
+            backend.addNote(track_num, event["channel"], event["pitch"],
                          event["time"], event["duration"], event["volume"])
 
 class Song:
@@ -187,11 +220,11 @@ class Song:
             file.writeFile(out)
 
 class Sample:
-    def __init__(self, file):
+    def __init__(self, file, program=0):
         self.song = Song()
         self.track = self.song.new_track("Sample")
         self.track.set_tempo(60)
-        self.track.set_program(0)
+        self.track.set_program(program)
         self.file = file
 
     def write_chord(self, type, root):
@@ -207,5 +240,5 @@ if __name__ == "__main__":
     sample = Sample("c-minor.mid")
     sample.write_chord(Chord.Min, "C4")
 
-    sample = Sample("notes.mid") 
+    sample = Sample("notes.mid", program=19) 
     sample.write_notes(["C4", "D4", "E4"])
