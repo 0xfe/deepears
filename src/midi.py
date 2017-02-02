@@ -70,6 +70,10 @@ class Note:
         value = ((octave+1) * 12) + cls.values[note] + shift
         return int(value)
 
+    @classmethod
+    def notes(cls, note_list):
+        return map(cls.note, note_list)
+
 class Chord:
     # Intervals
     IU = 0
@@ -200,7 +204,7 @@ class Track:
 
         for event in self.events:
             backend.addNote(track_num, event["channel"], event["pitch"],
-                         event["time"], event["duration"], event["volume"])
+                            event["time"], event["duration"], event["volume"])
 
 class Song:
     def __init__(self):
@@ -220,25 +224,36 @@ class Song:
             file.writeFile(out)
 
 class Sample:
-    def __init__(self, file, program=0):
-        self.song = Song()
-        self.track = self.song.new_track("Sample")
-        self.track.set_tempo(60)
-        self.track.set_program(program)
-        self.file = file
+    BEATS = 4
+    TEMPO = 60
 
-    def write_chord(self, type, root):
-        self.track.add_chord(Chord.gen_chord(type, Note.note(root)), 1)
-        self.song.write(self.file)
+    def __init__(self, file):
+        self.song = Song()
+        self.file = file
+        self.new_track()
+
+    def new_track(self, program=0):
+        self.track = self.song.new_track("Sample")
+        self.track.set_tempo(Sample.TEMPO)
+        self.track.set_program(program)
+
+    def write_chord(self, notes):
+        self.track.add_chord(notes, Sample.BEATS)
 
     def write_notes(self, notes):
         for pitch in notes:
-            self.track.add_note(Note.note(pitch), 1)
+            self.track.add_note(pitch, Sample.BEATS)
+
+    def save(self):
         self.song.write(self.file)
 
 if __name__ == "__main__":
     sample = Sample("c-minor.mid")
-    sample.write_chord(Chord.Min, "C4")
+    sample.write_chord(Chord.gen_chord(Chord.Min, Note.note("C4")))
+    sample.new_track(19) # Church organ
+    sample.write_chord(Chord.gen_chord(Chord.Min, Note.note("C5")))
+    sample.save()
 
-    sample = Sample("notes.mid", program=19) 
-    sample.write_notes(["C4", "D4", "E4"])
+    sample = Sample("notes.mid") 
+    sample.write_notes(Note.notes(["C4", "D4", "E4"]))
+    sample.save()
