@@ -7,7 +7,9 @@ Requires:
 $ pip install MIDIUtil
 '''
 
+import os
 import re
+import tempfile
 from midiutil.MidiFile import MIDIFile
 
 GM_PATCHES = [
@@ -154,8 +156,13 @@ class Chord:
     }
 
     @classmethod
-    def gen_chord(cls, intervals, root):
+    def chord(cls, intervals, root):
         return [root] + map(lambda i: root + i, intervals)
+
+    @classmethod
+    def invert(cls, notes, inversion):
+        for i in range(0, inversion):
+            notes[i] += 12
     
 class Track:
     def __init__(self, name):
@@ -224,8 +231,9 @@ class Song:
             file.writeFile(out)
 
 class Sample:
-    BEATS = 4
+    BEATS = 1
     TEMPO = 60
+    SOUNDFONT = "soundfont.sf2"
 
     def __init__(self, file):
         self.song = Song()
@@ -247,13 +255,24 @@ class Sample:
     def save(self):
         self.song.write(self.file)
 
+    def save_wav(self):
+        self.save()
+        soundfont = Sample.SOUNDFONT
+        mid_file = self.file
+        tmp_file = tempfile.mktemp()
+        wav_file = self.file + ".wav"
+        start_s = 0
+        end_s = 1
+        os.system("fluidsynth -l -i -a file %s %s -F %s" % (soundfont, mid_file, tmp_file))
+        os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s %s norm -3 remix 2 trim %f %f" % (tmp_file, wav_file, start_s, end_s))
+
 if __name__ == "__main__":
     sample = Sample("c-minor.mid")
-    sample.write_chord(Chord.gen_chord(Chord.Min, Note.note("C4")))
+    sample.write_chord(Chord.chord(Chord.Min, Note.note("C4")))
     sample.new_track(19) # Church organ
-    sample.write_chord(Chord.gen_chord(Chord.Min, Note.note("C5")))
+    sample.write_chord(Chord.chord(Chord.Min, Note.note("C5")))
     sample.save()
 
     sample = Sample("notes.mid") 
     sample.write_notes(Note.notes(["C4", "D4", "E4"]))
-    sample.save()
+    sample.save_wav()
