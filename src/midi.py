@@ -58,7 +58,7 @@ class Note:
     # the MIDI note number.
     @classmethod
     def note(cls, str):
-        matches = re.match('^([ABCDEFGabcdefg])([b#]?)([0-9])$', str)
+        matches = re.match('^([ABCDEFGabcdefg])([b#s]?)([0-9])$', str)
 
         note = matches.group(1).lower()
         acc = matches.group(2).lower()
@@ -68,6 +68,8 @@ class Note:
         if acc == "b":
             shift -= 1
         elif acc == '#':
+            shift += 1
+        elif acc == 's':
             shift += 1
 
         value = ((octave+1) * 12) + cls.values[note] + shift
@@ -103,7 +105,7 @@ class Chord:
     I13 = I8 + IM6
 
     # Chords
-    Maj = [IM2, Ip5]
+    Maj = [IM3, Ip5]
     Min = [Im3, Ip5]
     Dim = [Im3, Id5]
     Aug = [IM3, Ia5]
@@ -243,6 +245,7 @@ class Sample:
     def __init__(self, file):
         self.song = Song()
         self.file = file
+        self.tmp_file = None
         self.new_track()
 
     def new_track(self, program=0):
@@ -260,18 +263,21 @@ class Sample:
     def save(self):
         self.song.write(self.file)
 
-    def save_wav(self):
+    def make_wav(self, start_s=0, end_s=1):
         self.save()
         soundfont = Sample.SOUNDFONT
         mid_file = self.file
-        tmp_file = tempfile.mktemp()
-        wav_file = self.file + ".wav"
-        start_s = 0
-        end_s = 1
-        os.system("fluidsynth -l -i -a file %s %s -F %s" %
-                  (soundfont, mid_file, tmp_file))
-        os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s %s norm -3 remix 2 trim %f %f" %
-                  (tmp_file, wav_file, start_s, end_s))
+        self.tmp_file = tempfile.mktemp()
+        os.system("fluidsynth -l -i -a file %s %s -F %s -r 44100" %
+                  (soundfont, mid_file, self.tmp_file))
+
+    def save_wav(self, suffix, start_s=0, duration=1):
+        if self.tmp_file == None:
+            raise Exception("Must call make_wav first")
+
+        wav_file = self.file + "-" + suffix + ".wav"
+        os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s -r 8000 -b 8 %s norm -3 remix 2 trim %f %f" %
+                  (self.tmp_file, wav_file, start_s, duration))
 
 
 if __name__ == "__main__":
@@ -283,4 +289,4 @@ if __name__ == "__main__":
 
     sample = Sample("notes.mid")
     sample.write_notes(Note.notes(["C4", "D4", "E4"]))
-    sample.save_wav()
+    sample.make_wav()
