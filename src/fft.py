@@ -4,7 +4,7 @@
 # work on 24-bit files.
 #
 # $ sox --i data/wav/singles-V100-P56-attack.wav
-# 
+#
 #   Input File     : 'data/wav/singles-V100-P56-attack.wav'
 #   Channels       : 1
 #   Sample Rate    : 44100
@@ -20,7 +20,9 @@
 #
 #    $ source ./tf/bin/activate
 #    $ ./fft
-import scipy, numpy as np
+import matplotlib.pyplot as plt
+import scipy
+import numpy as np
 from scipy.io import wavfile
 from scipy import stats
 
@@ -28,18 +30,20 @@ from scipy import stats
 # it looks for an interactive display which isn't available.
 import matplotlib
 matplotlib.use('AGG')
-import matplotlib.pyplot as plt
 
 FILE = './data/wav/singles-V37-P30-O2-N1-B9000-attack.wav'
 
 # Open wav audio 'file' and do an N-point FFT of
 # data starting at START. Returns the sample rate and
 # an array of  N/2 imaginary numbers representing the freq domain.
+
+
 def fft_wav(file, N, START):
     rate, data = wavfile.read(file)
     # Calculate FFT for real valued input (rfft). Should return
     # N/2 imaginary numbers.
     return rate, np.fft.rfft(data[START:START+(N-1)])
+
 
 def plot_fft(fft, rate, file):
     N = fft.size * 2
@@ -49,7 +53,7 @@ def plot_fft(fft, rate, file):
     xaxis = np.array([x for x in range(0, N/2)]) * (rate / N)
 
     # Amplitude per bin is the magnitude of the complex value of
-    # the bin, divided by the number of bins (power distributed across bins.) 
+    # the bin, divided by the number of bins (power distributed across bins.)
     amplitudes = (2.0 / N) * np.abs(y[0:N/2])
 
     # Plot frequency histogram.
@@ -62,10 +66,12 @@ def plot_fft(fft, rate, file):
 #
 # The overlap represents the amount of time overlap between frames. So a value
 # of 4 means 25% overlapping frames.
-def stft(x, fftsize=2048, overlap=4):   
+def stft(x, fftsize=2048, overlap=4):
     hop = fftsize / overlap
-    w = scipy.hanning(fftsize+1)[:-1]      # better reconstruction with this trick +1)[:-1]  
+    # better reconstruction with this trick +1)[:-1]
+    w = scipy.hanning(fftsize+1)[:-1]
     return np.array([np.fft.rfft(w*x[i:i+fftsize]) for i in range(0, len(x)-fftsize, hop)])
+
 
 def plot_spectrogram(audio_data, rate, fftsize=256, overlap=4, file="stft.png"):
     N = fftsize
@@ -93,6 +99,7 @@ def plot_spectrogram(audio_data, rate, fftsize=256, overlap=4, file="stft.png"):
 
 # rate, y = fft_wav(FILE, 2048, 5000)
 # plot_fft(y, rate, "fft.png")
+
 
 rate, audio_data = wavfile.read(FILE)
 print stats.describe(np.array(audio_data))

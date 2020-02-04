@@ -13,32 +13,33 @@ import tempfile
 from midiutil.MidiFile import MIDIFile
 
 GM_PATCHES = [
-  0, # Acoustic Grand Piano
-  3, # Honky-tonk Piano
-  6, # Harpsichord
-  11, # Vibraphone
-  16, # Drawbar Organ
-  19, # Church Organ
-  22, # Harmonica
-  24, # Acoustic Guitar (nylon)
-  26, # Electric Guitar (jazz)
-  30, # Distortion Guitar
-  32, # Acoustic Bass
-  33, # Electric Bass (finger)
-  40, # Violin,
-  42, # Cello
-  48, # String Ensemble 1
-  51, # SynthStrings 2
-  52, # Choir Aahs
-  56, # Trumpet
-  57, # Trombone
-  61, # Brass Section
-  65, # Alto Sax
-  66, # Tenor Sax
-  71, # Clarinet
-  73, # Flute
-  78 # Whistle
+    0,  # Acoustic Grand Piano
+    3,  # Honky-tonk Piano
+    6,  # Harpsichord
+    11,  # Vibraphone
+    16,  # Drawbar Organ
+    19,  # Church Organ
+    22,  # Harmonica
+    24,  # Acoustic Guitar (nylon)
+    26,  # Electric Guitar (jazz)
+    30,  # Distortion Guitar
+    32,  # Acoustic Bass
+    33,  # Electric Bass (finger)
+    40,  # Violin,
+    42,  # Cello
+    48,  # String Ensemble 1
+    51,  # SynthStrings 2
+    52,  # Choir Aahs
+    56,  # Trumpet
+    57,  # Trombone
+    61,  # Brass Section
+    65,  # Alto Sax
+    66,  # Tenor Sax
+    71,  # Clarinet
+    73,  # Flute
+    78  # Whistle
 ]
+
 
 class Note:
     values = {
@@ -76,6 +77,7 @@ class Note:
     def notes(cls, note_list):
         return map(cls.note, note_list)
 
+
 class Chord:
     # Intervals
     IU = 0
@@ -84,10 +86,10 @@ class Chord:
     Im3 = 3
     IM3 = 4
     Ip4 = 5
-    Id5 = 6 # diminished 5th
-    Ip5 = 7 # perfect 5th
-    Ia5 = 8 # augmented 5th
-    Im6 = 8 # minor 6th
+    Id5 = 6  # diminished 5th
+    Ip5 = 7  # perfect 5th
+    Ia5 = 8  # augmented 5th
+    Im6 = 8  # minor 6th
     IM6 = 9
     Im7 = 10
     IM7 = 11
@@ -134,7 +136,7 @@ class Chord:
         "Aug": {"tones": Aug, "label": "Aug"},
         "Sus2": {"tones": Sus2, "label": "Sus"},
         "Sus4": {"tones": Sus4, "label": "Sus"},
-        "P5": {"tones": Maj, "label": "P5"},
+        "P5": {"tones": P5, "label": "P5"},
         "Maj7": {"tones": Maj7, "label": "Maj"},
         "Dom7": {"tones": Dom7, "label": "Dom"},
         "Min7": {"tones": Min7, "label": "Min"},
@@ -157,13 +159,14 @@ class Chord:
 
     @classmethod
     def chord(cls, intervals, root):
-        return [root] + map(lambda i: root + i, intervals)
+        return [root] + list(map(lambda i: root + i, intervals))
 
     @classmethod
     def invert(cls, notes, inversion):
         for i in range(0, inversion):
             notes[i] += 12
-    
+
+
 class Track:
     def __init__(self, name):
         self.name = name
@@ -213,6 +216,7 @@ class Track:
             backend.addNote(track_num, event["channel"], event["pitch"],
                             event["time"], event["duration"], event["volume"])
 
+
 class Song:
     def __init__(self):
         self.tracks = []
@@ -229,6 +233,7 @@ class Song:
 
         with open(file_name, "wb") as out:
             file.writeFile(out)
+
 
 class Sample:
     BEATS = 1
@@ -263,16 +268,19 @@ class Sample:
         wav_file = self.file + ".wav"
         start_s = 0
         end_s = 1
-        os.system("fluidsynth -l -i -a file %s %s -F %s" % (soundfont, mid_file, tmp_file))
-        os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s %s norm -3 remix 2 trim %f %f" % (tmp_file, wav_file, start_s, end_s))
+        os.system("fluidsynth -l -i -a file %s %s -F %s" %
+                  (soundfont, mid_file, tmp_file))
+        os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s %s norm -3 remix 2 trim %f %f" %
+                  (tmp_file, wav_file, start_s, end_s))
+
 
 if __name__ == "__main__":
     sample = Sample("c-minor.mid")
     sample.write_chord(Chord.chord(Chord.Min, Note.note("C4")))
-    sample.new_track(19) # Church organ
+    sample.new_track(19)  # Church organ
     sample.write_chord(Chord.chord(Chord.Min, Note.note("C5")))
     sample.save()
 
-    sample = Sample("notes.mid") 
+    sample = Sample("notes.mid")
     sample.write_notes(Note.notes(["C4", "D4", "E4"]))
     sample.save_wav()
