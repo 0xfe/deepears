@@ -267,7 +267,7 @@ class Sample:
         self.save()
         soundfont = Sample.SOUNDFONT
         mid_file = self.file
-        self.tmp_file = tempfile.mktemp()
+        self.tmp_file = self.file + "-" + "full" + ".wav"
         os.system("fluidsynth -l -i -a file %s %s -F %s -r 44100" %
                   (soundfont, mid_file, self.tmp_file))
 

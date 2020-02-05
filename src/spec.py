@@ -3,6 +3,13 @@ from scipy import signal
 import matplotlib.pyplot as plt
 import numpy as np
 import wave
+import sys
+
+if len(sys.argv) < 2:
+    print("Usage: spec.py filename")
+    sys.exit(1)
+
+filename = sys.argv[1]
 
 # Returns sample rate, data bytes
 # A 1 second 10khz wave file at unsigned 8-bit sample rate will return 10000 8-bit bytes.
