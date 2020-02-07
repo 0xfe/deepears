@@ -108,13 +108,13 @@ class Chord:
     Maj = [IM3, Ip5]
     Min = [Im3, Ip5]
     Dim = [Im3, Id5]
-    Aug = [IM3, Ia5]
     Sus2 = [IM2, Ip5]
     Sus4 = [Ip4, Ip5]
-    P5 = [Ip5]
-    Maj7 = Maj + [IM7]
     Dom7 = Maj + [Im7]
     Min7 = Min + [Im7]
+    Maj7 = Maj + [IM7]
+    Aug = [IM3, Ia5]
+    P5 = [Ip5]
     MinMaj7 = Min + [IM7]
     Maj9 = Maj7 + [I9]
     Maj7s11 = Maj7 + [Is11]
@@ -132,18 +132,22 @@ class Chord:
     Dom7b5s9 = Dom7b5 + [Is9]
 
     Names = {
-        "Maj": {"tones": Maj, "label": "Maj"},
-        "Min": {"tones": Min, "label": "Min"},
-        "Dim": {"tones": Dim, "label": "Dim"},
-        "Aug": {"tones": Aug, "label": "Aug"},
-        "Sus2": {"tones": Sus2, "label": "Sus"},
-        "Sus4": {"tones": Sus4, "label": "Sus"},
-        "P5": {"tones": P5, "label": "P5"},
-        "Maj7": {"tones": Maj7, "label": "Maj"},
-        "Dom7": {"tones": Dom7, "label": "Dom"},
-        "Min7": {"tones": Min7, "label": "Min"},
-        "MinMaj7": {"tones": MinMaj7, "label": "Min"},
-        "Maj9": {"tones": Maj9, "label": "Maj"},
+        "Maj": {"tones": Maj, "label": "major"},
+        "Min": {"tones": Min, "label": "minor"},
+        "Dim": {"tones": Dim, "label": "dim"},
+        "Sus2": {"tones": Sus2, "label": "sus2"},
+        "Sus4": {"tones": Sus4, "label": "sus4"},
+        "Dom7": {"tones": Dom7, "label": "dom7"},
+        "Min7": {"tones": Min7, "label": "min7"},
+        "Maj7": {"tones": Maj7, "label": "maj7"},
+
+        # Unused (for now)
+        "MinMaj7": {"tones": MinMaj7, "label": "minmaj7"},
+        "Maj9": {"tones": Maj9, "label": "maj9"},
+        "Aug": {"tones": Aug, "label": "aug"},
+        "P5": {"tones": P5, "label": "p5"},
+
+        # Set labels below
         "Maj7s11": {"tones": Maj7s11, "label": "Maj"},
         "Dom7s11": {"tones": Dom7s11, "label": "Dom"},
         "Dom7add13": {"tones": Dom7add13, "label": "Dom"},
@@ -167,6 +171,7 @@ class Chord:
     def invert(cls, notes, inversion):
         for i in range(0, inversion):
             notes[i] += 12
+        return notes
 
 
 class Track:
@@ -241,6 +246,8 @@ class Sample:
     BEATS = 1
     TEMPO = 60
     SOUNDFONT = "soundfont.sf2"
+    ENCODE_BITS = 16
+    ENCODE_HZ = 44100
 
     def __init__(self, file):
         self.song = Song()
@@ -276,8 +283,10 @@ class Sample:
             raise Exception("Must call make_wav first")
 
         wav_file = self.file + "-" + suffix + ".wav"
-        os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s -r 8000 -b 8 %s norm -3 remix 2 trim %f %f" %
-                  (self.tmp_file, wav_file, start_s, duration))
+        print("Writing ", wav_file, "with sample rate",
+              Sample.ENCODE_HZ, "and bit depth", Sample.ENCODE_BITS)
+        os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s -r %s -b %s %s norm -0.1 remix 2 trim %f %f" %
+                  (self.tmp_file, Sample.ENCODE_HZ, Sample.ENCODE_BITS, wav_file, start_s, duration))
 
 
 if __name__ == "__main__":

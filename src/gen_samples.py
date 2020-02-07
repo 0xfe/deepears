@@ -1,34 +1,61 @@
 #!/usr/bin/env python3
 
 from midi import Sample, Chord, Note, GM_PATCHES
+import random
 
-sample = Sample("c-major.mid")
-sample.write_chord(Chord.chord(Chord.Maj, Note.note("C4")))
-sample.new_track(19)  # Church organ
-sample.write_chord(Chord.chord(Chord.Maj, Note.note("C5")))
-sample.save()
-
-sample = Sample("c-scale.mid")
-sample.write_notes(Note.notes(["C2", "C3", "C4", "C5", "C6", "C7", "C8"]))
-sample.save()
+Sample.ENCODE_BITS = 8
+Sample.ENCODE_HZ = 8000
 
 OUTDIR = "./samples"
 
+OCTAVES = range(2, 6)
+NUM_PATCHES = 10
+INVERSIONS = [0, 1, 2]
+ROOTS = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
+CHORDS = [
+    Chord.Names["Maj"],
+    Chord.Names["Min"],
+    Chord.Names["Dim"],
+    Chord.Names["Sus2"],
+    Chord.Names["Sus4"],
+    Chord.Names["Dom7"],
+    Chord.Names["Min7"],
+    Chord.Names["Maj7"],
+]
 
-def render_chord(chord, octave, program, name):
-    for root in ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]:
-        base = root + str(octave)
-        sample = Sample(OUTDIR+"/"+base+"-"+name)
-        sample.new_track(19)
-        sample.write_chord(Chord.chord(chord, Note.note(base)))
-        print("Saving:", sample.file)
-        sample.make_wav()
-        sample.save_wav("attack", 0, 0.33)
-        sample.save_wav("sustain", 0.33, 0.33)
-        sample.save_wav("decay", 0.66, 0.33)
+
+def render_chord(chord, octave, name):
+    for root in ROOTS:
+        for inversion in INVERSIONS:
+            base = root + str(octave)
+            random.shuffle(GM_PATCHES)
+            program = GM_PATCHES[0]
+
+            sample = Sample(
+                OUTDIR+"/" +
+                base +
+                "-P" + str(program) +
+                "-" + name +
+                "-i" + str(inversion))
+
+            sample.new_track(program)
+            sample.write_chord(
+                Chord.invert(Chord.chord(chord, Note.note(base)), inversion))
+            print("Saving:", sample.file)
+            sample.make_wav()
+            sample.save_wav("attack", 0, 0.33)
+            sample.save_wav("sustain", 0.33, 0.33)
+            sample.save_wav("decay", 0.66, 0.33)
 
 
-for octave in range(2, 8):
-    for patch in GM_PATCHES:
-        render_chord(Chord.Maj, octave, patch, "P"+str(patch)+"-major")
-        render_chord(Chord.Min, octave, patch, "P"+str(patch)+"-minor")
+NUM_SAMPLES = len(OCTAVES) * NUM_PATCHES * \
+    len(INVERSIONS) * len(ROOTS) * len(CHORDS)
+NUM_SAMPLES = NUM_SAMPLES * 3  # attack, sustain, decay
+
+print("Rendering", NUM_SAMPLES, "samples.")
+input("Press Enter to start...")
+
+for octave in OCTAVES:
+    for patch in range(0, NUM_PATCHES):  # 10 random patches from GM_PATCHES
+        for chord in CHORDS:
+            render_chord(chord["tones"], octave, chord["label"])
