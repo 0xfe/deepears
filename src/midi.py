@@ -288,6 +288,11 @@ class Sample:
         os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s -r %s -b %s %s norm -0.1 remix 2 trim %f %f" %
                   (self.tmp_file, Sample.ENCODE_HZ, Sample.ENCODE_BITS, wav_file, start_s, duration))
 
+    def clean(self):
+        # Keep only attack, sustain, and decay wav files
+        os.remove(self.file)  # Remove midi file
+        os.remove(self.tmp_file)  # Remove -full .wav file
+
 
 if __name__ == "__main__":
     sample = Sample("c-minor.mid")

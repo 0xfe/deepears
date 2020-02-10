@@ -46,6 +46,7 @@ def render_chord(chord, octave, name):
             sample.save_wav("attack", 0, 0.33)
             sample.save_wav("sustain", 0.33, 0.33)
             sample.save_wav("decay", 0.66, 0.33)
+            sample.clean()
 
 
 NUM_SAMPLES = len(OCTAVES) * NUM_PATCHES * \
