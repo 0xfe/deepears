@@ -52,7 +52,7 @@ class Note:
         "b": 11
     }
 
-    names = ["C", "Cs", "D", "Eb", "E", "F", "Fs", "G", "Ab", "A", "Bb", "B"]
+    names = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
 
     # Takes a note in the form "C#4", "Bb2", "A5", etc. and returns
     # the MIDI note number.
@@ -182,12 +182,16 @@ class Track:
         self.tempo = 0
         self.program = 0
         self.num_channels = 1
+        self.tunings = []
 
     def set_tempo(self, tempo):
         self.tempo = tempo
 
     def set_program(self, program):
         self.program = program
+
+    def set_tunings(self, tunings):
+        self.tunings = tunings
 
     def add_note(self, pitch, duration, volume=100):
         self.events.append({
@@ -218,6 +222,12 @@ class Track:
         backend.addTempo(track_num, self.time, self.tempo)
         for channel in range(0, self.num_channels):
             backend.addProgramChange(track_num, channel, 0, self.program)
+            if len(self.tunings) > 0:
+                backend.changeNoteTuning(
+                    track_num, self.tunings, tuningProgam=self.program)
+                backend.changeTuningBank(track_num, channel, 0, 0)
+                backend.changeTuningProgram(
+                    track_num, channel, 0, self.program)
 
         for event in self.events:
             backend.addNote(track_num, event["channel"], event["pitch"],
@@ -259,6 +269,7 @@ class Sample:
         self.track = self.song.new_track("Sample")
         self.track.set_tempo(Sample.TEMPO)
         self.track.set_program(program)
+        return self.track
 
     def write_chord(self, notes):
         self.track.add_chord(notes, Sample.BEATS)
@@ -285,6 +296,7 @@ class Sample:
         wav_file = self.file + "-" + suffix + ".wav"
         print("Writing ", wav_file, "with sample rate",
               Sample.ENCODE_HZ, "and bit depth", Sample.ENCODE_BITS)
+
         os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 %s -r %s -b %s %s norm -0.1 remix 2 trim %f %f" %
                   (self.tmp_file, Sample.ENCODE_HZ, Sample.ENCODE_BITS, wav_file, start_s, duration))
 
