@@ -4,6 +4,8 @@ Mohit Muthanna Cheppudira <mohit@muthanna.com>
 
 Various experiments in music analysis using deep learning.
 
+Ignore the `src/` directory -- old junk.
+
 ## Generate Training Data
 
 ```
