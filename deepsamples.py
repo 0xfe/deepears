@@ -51,27 +51,13 @@ def chord_parts(f):
         "patch": parts[1],
         "chord": parts[2],
         "inversion": parts[3],
-        "envelope": parts[4],
+        "freq": float(parts[4]),
+        "shift": parts[5],
+        "volume": parts[6],
+        "reject": parts[7],
+        "envelope": parts[8],
     }
     partmap["root"] = re.match('([A-G]+[bs]?)(\d*)', parts[0]).group(1)
-    return partmap
-
-def note_parts(f):
-    parts = f.split("-")
-    partmap = {
-        "note": parts[1],
-        "patch": parts[2],
-        "freq": float(parts[3]),
-        "shift": parts[4],
-        "volume": parts[5],
-        "reject": parts[6],
-        "envelope": parts[7],
-    }
-
-    matches = re.match('([A-G]+[bs]?)(\d*)', parts[1])
-    partmap["root"] = matches.group(1)
-    partmap["octave"] = matches.group(2)
-    # partmap["freq"] = DeepSamples.note_to_freq(partmap["root"], partmap["octave"])
     return partmap
 
 def make_categories(classes):
@@ -96,15 +82,8 @@ class ChordSamples:
     self.root_classes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
     self.root_vectors = make_categories(self.root_classes)
 
-    self.xs = np.empty((self.num_samples, self.config.rows, self.config.cols))
-    self.chord_ys = np.empty((self.num_samples, len(self.chord_classes)))
-    self.root_ys = np.empty((self.num_samples, len(self.root_classes)))
-    self.freq_ys = np.empty((self.num_samples))
-    print("Initializing DeepSamples:DeepChords...")
-    print("size", self.config.rows, config.cols)
-    print("xs", self.xs.shape)
-    print("freq_ys", self.freq_ys.shape)
-    print("chord_ys", self.chord_ys.shape)
+    print("Initializing DeepSamples:ChordSamples...")
+    print("rows/cols:", self.config.rows, config.cols)
 
   def get_config(self):
     return self.config
@@ -116,6 +95,10 @@ class ChordSamples:
     return self.root_classes
 
   def load_chords(self):
+    self.xs = np.empty((self.num_samples, self.config.rows, self.config.cols))
+    self.chord_ys = np.empty((self.num_samples, len(self.chord_classes)))
+    self.root_ys = np.empty((self.num_samples, len(self.root_classes)))
+    self.freq_ys = np.empty((self.num_samples))
     print("Loading sample files...")
     files = os.listdir(self.dir_name)
     print("Shuffling samples...")
@@ -123,32 +106,10 @@ class ChordSamples:
     self.files = files
     print("Generating spectrograms...")
     for i, file in enumerate(files[:self.num_samples]):
-      self.xs[i] = self.spectrogram(os.path.join(self.dir_name, file))
+      self.xs[i] = self.spectrogram(os.path.join(self.dir_name, file))[:self.config.rows,:self.config.cols]
       self.chord_ys[i] = self.chord_vectors[chord_parts(file)["chord"]]
       self.root_ys[i] = self.root_vectors[chord_parts(file)["root"]]
-  
-  def load_notes(self):
-    print("Loading sample files...")
-    files = os.listdir(self.dir_name)
-    print("Shuffling samples...")
-    np.random.shuffle(files)
-    print("Generating spectrograms...")
-    for i, file in enumerate(files[:self.num_samples]):
-      self.xs[i] = self.spectrogram(os.path.join(self.dir_name, file))
-      self.root_ys[i] = self.root_vectors[note_parts(file)["root"]]
-      self.freq_ys[i] = note_parts(file)["freq"]
-
-    self.freq_mean = np.mean(self.freq_ys) 
-    self.freq_std = np.std(self.freq_ys)
-    self.freq_ys -= self.freq_mean
-    self.freq_ys /= self.freq_std
-
-  def reshaped_xs(self):
-    print("Reshaping for convolutional layers...")
-    # self.xs = self.xs / 255.0 # no need to normalize spectrogram output
-    # Conv2D layers need an additional dimension for channels. We have just one channel
-    # for audio data.
-    return self.xs.reshape(self.num_samples, self.config.rows, self.config.cols, 1)
+      self.freq_ys[i] = chord_parts(file)["freq"]
 
   def get_chord_samples(self):
     (training_xs, training_ys) = (self.xs[:self.training_size], self.chord_ys[:self.training_size])

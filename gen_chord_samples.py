@@ -74,4 +74,5 @@ def gen_chord_samples():
                                       inversion, program, resample_hz=16000)
 
 
-gen_chord_samples()
+if __name__ == "__main__":
+    gen_chord_samples()

@@ -119,4 +119,5 @@ def gen_instrument_samples():
                 sample.clean()
 
 
-gen_instrument_samples()
+if __name__ == "__main__":
+    gen_instrument_samples()
