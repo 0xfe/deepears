@@ -104,7 +104,7 @@ def gen_note_samples():
 
 
 def gen_instrument_samples():
-    for octave in range(2, 8):
+    for octave in range(2, 7):
         random.shuffle(GM_PATCHES)
         for program in GM_PATCHES:
             for key in Note.names:
@@ -113,10 +113,9 @@ def gen_instrument_samples():
                 sample.make_wav()
                 for pitch_shift_hz in np.concatenate((np.array([0]), np.random.randint(10, 80, 5))):
                     volume = np.round(np.random.uniform(0.2, 1.0), decimals=2)
-                    strip_fundamental = np.random.uniform() > 0.8
-                    sample.transform_wav("attack", duration=1, pitch_shift_hz=pitch_shift_hz,
-                                         volume=volume, strip_fundamental=strip_fundamental)
-
+                    sample.transform_wav("instrument", duration=1,
+                                         pitch_shift_hz=pitch_shift_hz, volume=volume,
+                                         strip_fundamental=False)
                 sample.clean()
 
 

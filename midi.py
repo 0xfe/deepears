@@ -326,7 +326,8 @@ class Sample:
               resample_hz, "and bit depth", resample_bits, ("(shift %s)" % shift_cents))
 
         os.system("sox -t raw -r 44100 -e signed -b 16 -c 2 -v %f %s -r %s -b %s %s norm -0.1 pitch %s remix 2 %s trim %f %f" %
-                  (volume, self.tmp_filename, resample_hz, resample_bits, wav_file, shift_cents, bandreject, start_s, duration))
+                  (volume, self.tmp_filename, resample_hz, resample_bits,
+                   wav_file, shift_cents, bandreject, start_s, duration))
 
     def clean(self):
         # Keep only attack, sustain, and decay wav files
