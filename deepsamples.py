@@ -22,28 +22,6 @@ def note_to_freq(note, octave, a_440=440.0):
     freq = a_440 * pow(2, (key - 49) / 12.0)
     return freq
 
-def gen_spectrogram(file, config=DefaultConfig):
-    fs, data = wavfile.read(file)
-    if config.resample > 0:
-        number_of_samples = round(len(data) * float(config.resample) / fs)
-        data = signal.resample(data, number_of_samples)
-        fs = config.resample
-
-    if config.no_spectrogram:
-        Sxx = np.reshape(data, (config.rows, config.cols))
-    else:
-        f, t, Sxx = signal.spectrogram(data, fs,
-                                        window=('hann'),
-            nperseg=config.s_nperseg,
-            nfft=config.s_nfft,
-            noverlap=config.s_noverlap,
-            mode='magnitude')
-
-        if config.log_scale:
-            np.log(Sxx, out=Sxx)
-
-    return Sxx
-
 def chord_parts(f):
     parts = f.split("-")
     partmap = {
@@ -68,13 +46,10 @@ def make_categories(classes):
 
 
 class ChordSamples:
-  def __init__(self, dir_name="./samples", num_samples=20000, split=0.8, config=DefaultConfig):
+  def __init__(self, dir_name="./samples", num_samples=100, config=DefaultConfig):
     self.config = config
     self.dir_name = dir_name  # path to samples
     self.num_samples = num_samples # number of samples to load
-    self.split = split  # training/testing split
-    self.training_size = int(self.num_samples * self.split)
-    self.testing_size = self.num_samples - self.training_size
 
     self.chord_classes = ["major", "minor", "dim", "sus2", "sus4", "dom7", "min7", "maj7"]
     self.chord_vectors = make_categories(self.chord_classes)
@@ -84,21 +59,22 @@ class ChordSamples:
 
     print("Initializing DeepSamples:ChordSamples...")
     print("rows/cols:", self.config.rows, config.cols)
+    
+  def process_file(self, file):
+      f, t, Sxx = helpers.spectrogram_from_file(os.path.join(self.dir_name, file), config=self.config, render=False)
 
-  def get_config(self):
-    return self.config
+      # Transpose the data for the 1D convolutions (time on first axis)
+      mags = np.absolute(Sxx)[:self.config.rows,:self.config.cols]
+      phases = np.angle(Sxx)[:self.config.rows,:self.config.cols]
 
-  def get_chord_classes(self):
-    return self.chord_classes
+      [mags, phases] = helpers.clip_by_magnitude(mags, phases, threshold=self.config.clip_magnitude_quantile, clip_mags=False)
+      return [mags, phases]
 
-  def get_root_classes(self):
-    return self.root_classes
-
-  def load_chords(self):
-    self.xs = np.empty((self.num_samples, self.config.rows, self.config.cols))
+  def load(self):
+    self.mags = np.empty((self.num_samples, self.config.rows, self.config.cols))
+    self.phases = np.empty((self.num_samples, self.config.rows, self.config.cols))
     self.chord_ys = np.empty((self.num_samples, len(self.chord_classes)))
     self.root_ys = np.empty((self.num_samples, len(self.root_classes)))
-    self.freq_ys = np.empty((self.num_samples))
     print("Loading sample files...")
     files = os.listdir(self.dir_name)
     print("Shuffling samples...")
@@ -106,25 +82,13 @@ class ChordSamples:
     self.files = files
     print("Generating spectrograms...")
     for i, file in enumerate(files[:self.num_samples]):
-      self.xs[i] = self.spectrogram(os.path.join(self.dir_name, file))[:self.config.rows,:self.config.cols]
+      (self.mags[i], self.phases[i]) = self.process_file(file)
       self.chord_ys[i] = self.chord_vectors[chord_parts(file)["chord"]]
       self.root_ys[i] = self.root_vectors[chord_parts(file)["root"]]
-      self.freq_ys[i] = chord_parts(file)["freq"]
-
-  def get_chord_samples(self):
-    (training_xs, training_ys) = (self.xs[:self.training_size], self.chord_ys[:self.training_size])
-    (testing_xs, testing_ys) = (self.xs[self.training_size:], self.chord_ys[self.training_size:])
-    return ((training_xs, training_ys), (testing_xs, testing_ys))
-
-  def get_root_samples(self):
-    (training_xs, training_ys) = (self.xs[:self.training_size], self.root_ys[:self.training_size])
-    (testing_xs, testing_ys) = (self.xs[self.training_size:], self.root_ys[self.training_size:])
-    return ((training_xs, training_ys), (testing_xs, testing_ys))
-
-  def get_freq_samples(self):
-    (training_xs, training_ys) = (self.xs[:self.training_size], self.freq_ys[:self.training_size])
-    (testing_xs, testing_ys) = (self.xs[self.training_size:], self.freq_ys[self.training_size:])
-    return ((training_xs, training_ys), (testing_xs, testing_ys))
+    
+    print("Normalizing data...")
+    (mag_mean, mag_std) = helpers.normalize(self.mags)
+    (phase_mean, phase_std) = helpers.normalize(self.phases)
 
   def spectrogram(self, file):
     return gen_spectrogram(file, self.config)

@@ -18,7 +18,8 @@ class Config:
       log_scale = False, # Return log scaled data
       no_spectrogram = False, # Return time-domain data (resampled to rows * cols data points)
       slice_start_s = 0, # Slice start time (seconds)
-      slice_duration_s = 0 # Slice duration (seconds)
+      slice_duration_s = 0, # Slice duration (seconds)
+      clip_magnitude_quantile = 0.25 # Clip by magnitude quartile (mag and phase)
   ):
     self.rows = rows
     self.cols = cols
@@ -30,6 +31,7 @@ class Config:
     self.no_spectrogram = no_spectrogram
     self.slice_start_s = slice_start_s
     self.slice_duration_s = slice_duration_s
+    self.clip_magnitude_quantile = clip_magnitude_quantile
     
 config = Config(
     rows=129,
@@ -127,8 +129,10 @@ def make_windows(xs, length=10, config=config):
   return np.reshape(windows, (windows.shape[0], length, config.rows * 2))
 
 
-def clip_by_magnitude(mags, phases, threshold=0.75):
+def clip_by_magnitude(mags, phases, threshold=0.75, clip_mags=True, clip_phases=True):
   clip = np.quantile(mags, threshold)
-  mags = np.where(np.abs(mags) >= clip, mags, 0)
-  phases = np.where(np.abs(mags) >= clip, phases, 0)
-  return clip
+  if clip_phases:
+    phases = np.where(np.abs(mags) >= clip, phases, 0)
+  if clip_mags:
+    mags = np.where(np.abs(mags) >= clip, mags, 0)
+  return [mags, phases]
