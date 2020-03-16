@@ -51,7 +51,7 @@ class ChordSamples:
     self.dir_name = dir_name  # path to samples
     self.num_samples = num_samples # number of samples to load
 
-    self.chord_classes = ["major", "minor", "dim", "sus2", "sus4", "dom7", "min7", "maj7"]
+    self.chord_classes = ["major", "minor", "dim", "dom7", "min7", "maj7"]
     self.chord_vectors = make_categories(self.chord_classes)
 
     self.root_classes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
@@ -85,10 +85,8 @@ class ChordSamples:
       (self.mags[i], self.phases[i]) = self.process_file(file)
       self.chord_ys[i] = self.chord_vectors[chord_parts(file)["chord"]]
       self.root_ys[i] = self.root_vectors[chord_parts(file)["root"]]
+      if i % 500 == 0: print(i)
     
     print("Normalizing data...")
     (mag_mean, mag_std) = helpers.normalize(self.mags)
     (phase_mean, phase_std) = helpers.normalize(self.phases)
-
-  def spectrogram(self, file):
-    return gen_spectrogram(file, self.config)
