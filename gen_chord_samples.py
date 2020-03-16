@@ -6,7 +6,7 @@ import random
 
 OUTDIR = "./samples"
 OCTAVES = range(2, 6)
-NUM_PATCHES = 10
+NUM_PATCHES = 20
 INVERSIONS = [0, 1, 2]
 ROOTS = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
 NUM_ROOTS = 5
