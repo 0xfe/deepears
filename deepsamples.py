@@ -68,6 +68,8 @@ class ChordSamples:
       phases = np.angle(Sxx)[:self.config.rows,:self.config.cols]
 
       [mags, phases] = helpers.clip_by_magnitude(mags, phases, threshold=self.config.clip_magnitude_quantile, clip_mags=False)
+      if self.config.log_scale:
+        mags = np.log(mags)
       return [mags, phases]
 
   def load(self):
@@ -88,5 +90,5 @@ class ChordSamples:
       if i % 500 == 0: print(i)
     
     print("Normalizing data...")
-    (mag_mean, mag_std) = helpers.normalize(self.mags)
-    (phase_mean, phase_std) = helpers.normalize(self.phases)
+    (self.mag_mean, self.mag_std) = helpers.normalize(self.mags)
+    (self.phase_mean, self.phase_std) = helpers.normalize(self.phases)
