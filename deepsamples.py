@@ -104,21 +104,21 @@ class PolySamples:
   @classmethod
   def file_parts(cls, f):
     parts = f.split("-")
-    notes = parts[2].split(':')[1:]
+    notes = parts[3].split(':')[1:]
     partmap = {
-        "patch": parts[1],
+        "patch": parts[2],
         "notes": notes,
-        "freq": float(parts[3]),
-        "shift": parts[4],
-        "volume": parts[5],
-        "reject": parts[6],
+        "freq": float(parts[4]),
+        "shift": parts[5],
+        "volume": parts[6],
+        "reject": parts[7],
     }
     return partmap
 
-  def __init__(self, dir_name="./samples", num_samples=100, config=DefaultConfig):
+  def __init__(self, dir_name="./samples", num_files=100, config=DefaultConfig):
     self.config = config
     self.dir_name = dir_name  # path to samples
-    self.num_samples = num_samples # number of samples to load
+    self.num_files = num_files # number of samples to load
 
     # Generate 12 tones across 5 octaves
     self.note_classes = ["%s%d" % (key, octave) for octave in range(2,7) for key in Note.names]
@@ -127,15 +127,25 @@ class PolySamples:
     # Slice samples into windows
     self.window_size = 10
     self.window_stride = 5
+    self.windows_per_file = ((config.cols - self.window_size) // self.window_stride) + 1
+    
+    self.rows = self.config.rows
+    self.cols = self.window_size
 
     print("Initializing DeepSamples:PolySamples...")
-    print("rows/cols:", self.config.rows, config.cols)
+    print("rows: %d, cols: %d, windows_per_file: %d" % (self.config.rows, config.cols, self.windows_per_file))
   
   def notes_to_vector(self, notes):
+    # Returns a multi-label vector for notes, by summing the one-hot encodings
+    # and clipping.
     return np.minimum(
       np.sum(np.array([self.note_vectors[note] for note in notes]), axis=0),
       np.ones(len(self.note_classes)))
   
+  def vector_to_notes(self, vector):
+    indexes = np.where(vector == 1)[0]
+    return [self.note_classes[x] for x in indexes]
+    
   def process_file(self, file):
     f, t, Sxx = helpers.spectrogram_from_file(os.path.join(self.dir_name, file), config=self.config, render=False)
 
@@ -148,16 +158,17 @@ class PolySamples:
       mags = np.log(mags)
     
     length = mags.shape[1]
-    mag_windows = [mags[:,i:i + window_size] for i in range(0, length - self.window_size, self.window_stride)]
-    phase_windows = [phases[:,i:i + window_size] for i in range(0, length - self.window_size, self.window_stride)]
+    mag_windows = [mags[:,i:i + self.window_size] for i in range(0, length - self.window_size, self.window_stride)]
+    phase_windows = [phases[:,i:i + self.window_size] for i in range(0, length - self.window_size, self.window_stride)]
 
-    return [np.vstack(mag_windows), np.vstack(phase_windows)]
+    return [mag_windows, phase_windows]
 
   def load(self):
-    self.mags = np.empty((self.num_samples, self.config.rows, self.config.cols))
-    self.phases = np.empty((self.num_samples, self.config.rows, self.config.cols))
-    self.chord_ys = np.empty((self.num_samples, len(self.chord_classes)))
-    self.root_ys = np.empty((self.num_samples, len(self.root_classes)))
+    self.tunings = np.empty((self.num_files * self.windows_per_file, 1))
+    self.mags = np.empty((self.num_files * self.windows_per_file, self.rows, self.cols))
+    self.phases = np.empty((self.num_files * self.windows_per_file, self.rows, self.cols))
+    self.ys = np.empty((self.num_files * self.windows_per_file, len(self.note_classes)))
+
     print("Loading sample files...")
     files = os.listdir(self.dir_name)
     print("Shuffling samples...")
@@ -165,15 +176,23 @@ class PolySamples:
     self.files = files
     
     print("Generating spectrograms...")
-    p = display.ProgressBar(self.num_samples)
+    p = display.ProgressBar(self.num_files)
     p.display()
-    for i, file in enumerate(files[:self.num_samples]):
-      (self.mags[i], self.phases[i]) = self.process_file(file)
-      self.chord_ys[i] = self.chord_vectors[chord_parts(file)["chord"]]
-      self.root_ys[i] = self.root_vectors[chord_parts(file)["root"]]
+    for i, file in enumerate(files[:self.num_files]):
+      (mag_windows, phase_windows) = self.process_file(file)
+      for j in range(len(mag_windows)):
+        self.mags[i * self.windows_per_file + j] = mag_windows[j]
+        self.phases[i * self.windows_per_file + j] = phase_windows[j]
+        
+      start = i * self.windows_per_file
+      end = start + self.windows_per_file
+      
+      self.tunings[start:end] = self.file_parts(file)["freq"]
+      self.ys[start:end] = self.notes_to_vector(self.file_parts(file)["notes"])
+
       if i % 50 == 0: p.progress = i
   
-    p.progress = self.num_samples
+    p.progress = self.num_files
     print("Normalizing data...")
     (self.mag_mean, self.mag_std) = helpers.normalize(self.mags)
     (self.phase_mean, self.phase_std) = helpers.normalize(self.phases)
