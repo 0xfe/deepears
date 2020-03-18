@@ -3,6 +3,8 @@
 import numpy as np
 from midi import Sample, Chord, Note, GM_PATCHES
 import random
+from IPython import display
+from IPython.utils import io
 
 OUTDIR = "./samples"
 OCTAVES = range(2, 6)
@@ -78,7 +80,7 @@ def write_polyphonic_samples(notes, program, resample_hz=16000, resample_bits=16
     sample = Sample(
         OUTDIR+"/poly-" +
         "-P" + str(program) +
-        "-N:" + ('-').join(notes))
+        "-N:" + (':').join(notes))
 
     sample.new_track(program)
     sample.write_chord(Note.notes(notes))
@@ -101,16 +103,20 @@ def gen_polyphonic_samples(num_samples=1, hz=16000, patches_per_sample=5):
             all_notes.append("%s%d" % (key, octave))
 
     random.shuffle(all_notes)
+    p = display.ProgressBar(num_samples)
+    p.display()
     for i in range(num_samples):
+        p.progress = i
         num_notes = np.random.randint(7) + 1  # At most 7 notes (1 - 7)
         notes = [all_notes[np.random.randint(
             len(all_notes))] for j in range(num_notes)]
 
-        print(notes)
         # Generate file from note_array
         random.shuffle(GM_PATCHES)
-        for program in GM_PATCHES[:patches_per_sample]:
-            write_polyphonic_samples(notes, program, resample_hz=hz)
+        with io.capture_output() as captured:
+            for program in GM_PATCHES[:patches_per_sample]:
+                write_polyphonic_samples(notes, program, resample_hz=hz)
+    p.progress = num_samples
 
 
 if __name__ == "__main__":

@@ -7,9 +7,12 @@ import re
 import sys
 import os
 from keras.utils.np_utils import to_categorical
+from IPython import display
 
 import helpers
 from helpers import Config, DefaultConfig
+
+from midi import Note
 
 def note_to_freq(note, octave, a_440=440.0):
     notes = ['A', 'As', 'B', 'C', 'Cs', 'D',
@@ -54,7 +57,7 @@ class ChordSamples:
     self.chord_classes = ["major", "minor", "dim", "dom7", "min7", "maj7"]
     self.chord_vectors = make_categories(self.chord_classes)
 
-    self.root_classes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
+    self.root_classes = Note.names
     self.root_vectors = make_categories(self.root_classes)
 
     print("Initializing DeepSamples:ChordSamples...")
@@ -63,7 +66,6 @@ class ChordSamples:
   def process_file(self, file):
       f, t, Sxx = helpers.spectrogram_from_file(os.path.join(self.dir_name, file), config=self.config, render=False)
 
-      # Transpose the data for the 1D convolutions (time on first axis)
       mags = np.absolute(Sxx)[:self.config.rows,:self.config.cols]
       phases = np.angle(Sxx)[:self.config.rows,:self.config.cols]
 
@@ -82,13 +84,97 @@ class ChordSamples:
     print("Shuffling samples...")
     np.random.shuffle(files)
     self.files = files
+    
     print("Generating spectrograms...")
+    p = display.ProgressBar(self.num_samples)
+    p.display()
     for i, file in enumerate(files[:self.num_samples]):
       (self.mags[i], self.phases[i]) = self.process_file(file)
       self.chord_ys[i] = self.chord_vectors[chord_parts(file)["chord"]]
       self.root_ys[i] = self.root_vectors[chord_parts(file)["root"]]
-      if i % 500 == 0: print(i)
-    
+      if i % 50 == 0: p.progress = i
+  
+    p.progress = self.num_samples
     print("Normalizing data...")
     (self.mag_mean, self.mag_std) = helpers.normalize(self.mags)
     (self.phase_mean, self.phase_std) = helpers.normalize(self.phases)
+    print("Samples ready.")
+    
+class PolySamples:
+  @classmethod
+  def file_parts(cls, f):
+    parts = f.split("-")
+    notes = parts[2].split(':')[1:]
+    partmap = {
+        "patch": parts[1],
+        "notes": notes,
+        "freq": float(parts[3]),
+        "shift": parts[4],
+        "volume": parts[5],
+        "reject": parts[6],
+    }
+    return partmap
+
+  def __init__(self, dir_name="./samples", num_samples=100, config=DefaultConfig):
+    self.config = config
+    self.dir_name = dir_name  # path to samples
+    self.num_samples = num_samples # number of samples to load
+
+    # Generate 12 tones across 5 octaves
+    self.note_classes = ["%s%d" % (key, octave) for octave in range(2,7) for key in Note.names]
+    self.note_vectors = make_categories(self.note_classes)
+    
+    # Slice samples into windows
+    self.window_size = 10
+    self.window_stride = 5
+
+    print("Initializing DeepSamples:PolySamples...")
+    print("rows/cols:", self.config.rows, config.cols)
+  
+  def notes_to_vector(self, notes):
+    return np.minimum(
+      np.sum(np.array([self.note_vectors[note] for note in notes]), axis=0),
+      np.ones(len(self.note_classes)))
+  
+  def process_file(self, file):
+    f, t, Sxx = helpers.spectrogram_from_file(os.path.join(self.dir_name, file), config=self.config, render=False)
+
+    mags = np.absolute(Sxx)[:self.config.rows,:self.config.cols]
+    phases = np.angle(Sxx)[:self.config.rows,:self.config.cols]
+
+    [mags, phases] = helpers.clip_by_magnitude(mags, phases, threshold=self.config.clip_magnitude_quantile, clip_mags=False)
+    
+    if self.config.log_scale:
+      mags = np.log(mags)
+    
+    length = mags.shape[1]
+    mag_windows = [mags[:,i:i + window_size] for i in range(0, length - self.window_size, self.window_stride)]
+    phase_windows = [phases[:,i:i + window_size] for i in range(0, length - self.window_size, self.window_stride)]
+
+    return [np.vstack(mag_windows), np.vstack(phase_windows)]
+
+  def load(self):
+    self.mags = np.empty((self.num_samples, self.config.rows, self.config.cols))
+    self.phases = np.empty((self.num_samples, self.config.rows, self.config.cols))
+    self.chord_ys = np.empty((self.num_samples, len(self.chord_classes)))
+    self.root_ys = np.empty((self.num_samples, len(self.root_classes)))
+    print("Loading sample files...")
+    files = os.listdir(self.dir_name)
+    print("Shuffling samples...")
+    np.random.shuffle(files)
+    self.files = files
+    
+    print("Generating spectrograms...")
+    p = display.ProgressBar(self.num_samples)
+    p.display()
+    for i, file in enumerate(files[:self.num_samples]):
+      (self.mags[i], self.phases[i]) = self.process_file(file)
+      self.chord_ys[i] = self.chord_vectors[chord_parts(file)["chord"]]
+      self.root_ys[i] = self.root_vectors[chord_parts(file)["root"]]
+      if i % 50 == 0: p.progress = i
+  
+    p.progress = self.num_samples
+    print("Normalizing data...")
+    (self.mag_mean, self.mag_std) = helpers.normalize(self.mags)
+    (self.phase_mean, self.phase_std) = helpers.normalize(self.phases)
+    print("Samples ready.")
