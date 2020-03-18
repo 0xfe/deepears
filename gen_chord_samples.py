@@ -22,7 +22,7 @@ CHORDS = [
 ]
 
 
-def write_samples(root, octave, chord, inversion, program, resample_hz=44100, resample_bits=16):
+def write_chord_samples(root, octave, chord, inversion, program, resample_hz=44100, resample_bits=16):
     chord_name = chord["label"]
     base = root + str(octave)
     chord_intervals = Chord.chord(
@@ -70,9 +70,48 @@ def gen_chord_samples():
                 random.shuffle(GM_PATCHES)
                 for program in GM_PATCHES[:NUM_PATCHES]:
                     for inversion in INVERSIONS:
-                        write_samples(root, octave, chord,
-                                      inversion, program, resample_hz=16000)
+                        write_chord_samples(root, octave, chord,
+                                            inversion, program, resample_hz=16000)
+
+
+def write_polyphonic_samples(notes, program, resample_hz=16000, resample_bits=16, num_pitch_shifts=2):
+    sample = Sample(
+        OUTDIR+"/poly-" +
+        "-P" + str(program) +
+        "-N:" + ('-').join(notes))
+
+    sample.new_track(program)
+    sample.write_chord(Note.notes(notes))
+    print("Saving:", sample.mid_filename, sample.tmp_filename)
+    freq = 440
+    sample.make_wav()
+    for pitch_shift_hz in np.concatenate((np.array([0]), np.random.randint(-30, 30, num_pitch_shifts))):
+        volume = np.round(
+            np.random.uniform(0.2, 1.0), decimals=2)
+        sample.transform_wav("full", start_s=0, duration=1, pitch_shift_base_freq=freq, volume=volume,
+                             pitch_shift_hz=pitch_shift_hz, resample_hz=resample_hz, resample_bits=resample_bits)
+    sample.clean()
+
+
+def gen_polyphonic_samples(num_samples=1, hz=16000, patches_per_sample=5):
+    # Generates num_samples * patches_per_sample * (num_pitch_shifts + 1) subsamples per sample
+    all_notes = []
+    for key in Note.names:
+        for octave in range(2, 7):
+            all_notes.append("%s%d" % (key, octave))
+
+    random.shuffle(all_notes)
+    for i in range(num_samples):
+        num_notes = np.random.randint(7) + 1  # At most 7 notes (1 - 7)
+        notes = [all_notes[np.random.randint(
+            len(all_notes))] for j in range(num_notes)]
+
+        print(notes)
+        # Generate file from note_array
+        random.shuffle(GM_PATCHES)
+        for program in GM_PATCHES[:patches_per_sample]:
+            write_polyphonic_samples(notes, program, resample_hz=hz)
 
 
 if __name__ == "__main__":
-    gen_chord_samples()
+    gen_polyphonic_samples(1000)

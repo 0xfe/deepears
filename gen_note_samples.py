@@ -81,6 +81,7 @@ class Sample:
         os.remove(self.tmp_filename)  # Remove -full .wav file
 
 
+# Generate samples of single note files for pitch detection.
 def gen_note_samples():
     for octave in range(2, 8):
         random.shuffle(GM_PATCHES)
@@ -103,6 +104,7 @@ def gen_note_samples():
                 sample.clean()
 
 
+# Generate samples of instrument voices for GAN
 def gen_instrument_samples():
     for octave in range(2, 7):
         random.shuffle(GM_PATCHES)
