@@ -23,8 +23,9 @@ Use Jupyter to open one of the ipynb notebooks and follow instructions there.
 Current notebooks:
 
 * DeepChords - Chord and root recognition model
+* Polyphonic Pitch (Multi GPU) - Detect multiple pitches for the same instrument
 * Phase_Reconstruction - Attempt to reconstruct phases for magnitude-only spectrograms
-* DeepInstruments GAN (support for multi) - Generate new instruments, uses distributed training
+* DeepInstruments GAN (Multi GPU) - Generate new instruments, uses distributed training
 * DeepSTFT - Teach neural networks to learn STFT and FFT functions
 * DeepEars - Old models for chord, pitch, and root detection
 
