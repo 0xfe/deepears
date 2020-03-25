@@ -5,6 +5,7 @@ from midi import Sample, Chord, Note, GM_PATCHES
 import random
 from IPython import display
 from IPython.utils import io
+import multiprocessing as mp
 
 OUTDIR = "./samples"
 OCTAVES = range(2, 6)
@@ -97,6 +98,7 @@ def write_polyphonic_samples(notes, program, resample_hz=16000, resample_bits=16
 
 def gen_polyphonic_samples(num_samples=1, hz=16000, patches_per_sample=5):
     # Generates num_samples * patches_per_sample * (num_pitch_shifts + 1) subsamples per sample
+    print("Generating %d samples with %d processes..." % (num_samples * patches_per_sample, mp.cpu_count()))
     all_notes = []
     for key in Note.names:
         for octave in range(2, 7):
@@ -105,6 +107,7 @@ def gen_polyphonic_samples(num_samples=1, hz=16000, patches_per_sample=5):
     random.shuffle(all_notes)
     p = display.ProgressBar(num_samples)
     p.display()
+    pool = mp.Pool(mp.cpu_count())
     for i in range(num_samples):
         p.progress = i
         num_notes = np.random.randint(7) + 1  # At most 7 notes (1 - 7)
@@ -115,7 +118,9 @@ def gen_polyphonic_samples(num_samples=1, hz=16000, patches_per_sample=5):
         random.shuffle(GM_PATCHES)
         with io.capture_output() as captured:
             for program in GM_PATCHES[:patches_per_sample]:
-                write_polyphonic_samples(notes, program, resample_hz=hz)
+                pool.apply(write_polyphonic_samples, args=(notes, program, hz))
+                
+    pool.close()
     p.progress = num_samples
 
 
